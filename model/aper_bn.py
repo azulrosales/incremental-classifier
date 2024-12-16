@@ -12,9 +12,7 @@ num_workers = 0
 
 class Learner(object):
     def __init__(self, args):
-        self._cur_task = -1
         self._known_classes = 0
-        self.topk = 2
         self._network = SimpleCosineIncrementalNet(args)
         self.batch_size = 128
         self.init_epoch = args.get("init_epoch", 40)
@@ -26,10 +24,10 @@ class Learner(object):
     def feature_dim(self):
         return self._network.feature_dim
 
-    def _train(self, train_loader, train_loader_for_protonet):
+    def _train(self, train_loader, train_loader_for_protonet, session):
         self._network.to(self._device)
 
-        if self._cur_task == 0:
+        if session == 0:
             self._init_train(train_loader)
             self.construct_dual_branch_network()
         else:
@@ -74,7 +72,9 @@ class Learner(object):
 
         print('APER BN: Replacing FC layer')
         class_list = np.unique(self.train_dataset.labels)
+        print(class_list)
         for class_index in class_list:
+            print(class_index)
             print('Replacing...', class_index)
             data_index = (label_list == class_index).nonzero().squeeze(-1)
             embedding = embedding_list[data_index]
@@ -82,26 +82,25 @@ class Learner(object):
             self._network.fc.weight.data[class_index] = proto
         return model
 
-    def incremental_train(self, data_manager):
+    def incremental_train(self, data_manager, session):
         print('APER BN: Incremental Train')
-        self._cur_task += 1
-        self._total_classes = self._known_classes + data_manager.get_task_size(self._cur_task)
         self.data_manager = data_manager
         
-        self._network.update_fc(self._total_classes)
-        logging.info("Learning on {}-{}".format(self._known_classes, self._total_classes-1))
-
-        train_dataset = data_manager.get_dataset(np.arange(self._known_classes, self._total_classes), source="train", mode="train")
+        train_dataset = data_manager.get_dataset(source="train", mode="train")
+        self._total_classes = len(np.unique(train_dataset.labels))
         self.train_dataset = train_dataset
         self.train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=num_workers)
         
-        test_dataset = data_manager.get_dataset(np.arange(0, self._total_classes), source="test", mode="test")
+        self._network.update_fc(self._total_classes)
+        logging.info("Learning on {}-{}".format(self._known_classes, self._total_classes-1))
+        
+        test_dataset = data_manager.get_dataset(source="test", mode="test")
         self.test_loader = DataLoader(test_dataset, batch_size=self.batch_size, shuffle=False, num_workers=num_workers)
 
-        train_dataset_for_protonet = data_manager.get_dataset(np.arange(self._known_classes, self._total_classes), source="train", mode="test")
+        train_dataset_for_protonet = data_manager.get_dataset(source="train", mode="test")
         self.train_loader_for_protonet = DataLoader(train_dataset_for_protonet, batch_size=self.batch_size, shuffle=True, num_workers=num_workers)
 
-        self._train(self.train_loader, self.train_loader_for_protonet)
+        self._train(self.train_loader, self.train_loader_for_protonet, session)
 
 
     def construct_dual_branch_network(self):
@@ -144,14 +143,6 @@ class Learner(object):
 
     def after_task(self):
         self._known_classes = self._total_classes
-
-    def save_checkpoint(self, filename):
-        self._network.cpu()
-        save_dict = {
-            "tasks": self._cur_task,
-            "model_state_dict": self._network.state_dict(),
-        }
-        torch.save(save_dict, "{}_{}.pkl".format(filename, self._cur_task))
 
     def _evaluate(self, y_pred, y_true, data_manager):
         ret = {}

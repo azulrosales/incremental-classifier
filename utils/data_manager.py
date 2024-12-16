@@ -7,31 +7,18 @@ from utils.data import iData
 
 
 class DataManager(object):
-    def __init__(self, dataset_name, seed, init_cls, increment):
+    def __init__(self, dataset_name, seed):
         self.dataset_name = dataset_name
         self._setup_data(dataset_name, seed)
-        self._increments = [init_cls]
-        while sum(self._increments) + increment < len(self._class_order):
-            self._increments.append(increment)
-        offset = len(self._class_order) - sum(self._increments)
-        if offset > 0:
-            self._increments.append(offset)
-
-    @property
-    def incremental_sessions(self):
-        return len(self._increments)
-
-    def get_task_size(self, task):
-        return self._increments[task]
 
     def get_total_classnum(self):
         return len(self._class_order)
 
-    def get_dataset(self, indices, source, mode):
+    def get_dataset(self, source, mode):
         if source == "train":
-            x, y = self._train_data, self._train_targets
+            data, targets = self._train_data, self._train_targets
         elif source == "test":
-            x, y = self._test_data, self._test_targets
+            data, targets = self._test_data, self._test_targets
         else:
             raise ValueError("Unknown data source {}.".format(source))
 
@@ -42,16 +29,7 @@ class DataManager(object):
         else:
             raise ValueError("Unknown mode {}.".format(mode))
 
-        data, targets = [], []
-        for idx in indices:
-            class_data, class_targets = self._select(x, y, low_range=idx, high_range=idx + 1)
-            data.append(class_data)
-            targets.append(class_targets)
-
-        data, targets = np.concatenate(data), np.concatenate(targets)
-
         return DummyDataset(data, targets, trsf, self.use_path)
-        
 
     def _setup_data(self, dataset_name, seed, shuffle=True):
         idata = _get_idata(dataset_name)
@@ -87,27 +65,6 @@ class DataManager(object):
 
         # Logging the mapping
         logging.info(f"Class name mapping: {self._class_mapping}")
-
-    def _select(self, x, y, low_range, high_range):
-        idxes = np.where(np.logical_and(y >= low_range, y < high_range))[0]
-        return x[idxes], y[idxes]
-
-    def _select_rmm(self, x, y, low_range, high_range, m_rate):
-        assert m_rate is not None
-        if m_rate != 0:
-            idxes = np.where(np.logical_and(y >= low_range, y < high_range))[0]
-            selected_idxes = np.random.randint(
-                0, len(idxes), size=int((1 - m_rate) * len(idxes))
-            )
-            new_idxes = idxes[selected_idxes]
-            new_idxes = np.sort(new_idxes)
-        else:
-            new_idxes = np.where(np.logical_and(y >= low_range, y < high_range))[0]
-        return x[new_idxes], y[new_idxes]
-
-    def getlen(self, index):
-        y = self._train_targets
-        return np.sum(np.where(y == index))
 
 
 class DummyDataset(Dataset):
