@@ -41,7 +41,7 @@ class iData(object):
     class_order = np.arange(28).tolist()
 
     def download_data(self):
-        path = '/data'
+        path = 'data/'
         data = ImageFolder(root=path)
 
         try:
