@@ -18,7 +18,7 @@ def train(args):
     set_random()
     print_args(args)
     
-    data_manager = DataManager(args["dataset"], args["seed"])
+    data_manager = DataManager(args["seed"])
     model = Learner(args)
 
     try:

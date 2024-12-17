@@ -7,9 +7,8 @@ from utils.data import iData
 
 
 class DataManager(object):
-    def __init__(self, dataset_name, seed):
-        self.dataset_name = dataset_name
-        self._setup_data(dataset_name, seed)
+    def __init__(self, seed):
+        self._setup_data(seed)
 
     def get_total_classnum(self):
         return len(self._class_order)
@@ -31,8 +30,8 @@ class DataManager(object):
 
         return DummyDataset(data, targets, trsf, self.use_path)
 
-    def _setup_data(self, dataset_name, seed, shuffle=True):
-        idata = _get_idata(dataset_name)
+    def _setup_data(self, seed, shuffle=True):
+        idata = iData()
         idata.download_data()
 
         # Data
@@ -90,15 +89,6 @@ class DummyDataset(Dataset):
 
 def _map_new_class_index(y, order):
     return np.array(list(map(lambda x: order.index(x), y)))
-
-
-def _get_idata(dataset_name):
-    name = dataset_name.lower()
-    if name=="produce-quality":
-        return iData()
-    else:
-        raise NotImplementedError("Unknown dataset {}.".format(dataset_name))
-
 
 def pil_loader(path):
     """
