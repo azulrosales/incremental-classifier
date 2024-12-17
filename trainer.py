@@ -23,10 +23,9 @@ def train(args):
 
     try:
         checkpoint = torch.load("model_checkpoint.pth")
-        logging.info("Loading saved model for session {}".format(session))
         model._network.load_state_dict(checkpoint["model_state"])
         metadata = checkpoint["metadata"]
-        print('Loaded metadata', metadata)
+        logging.info('Loaded metadata for session {}'.format(metadata["session"]), metadata)
     except FileNotFoundError:
         logging.warning("No checkpoint found!")
         metadata = {"classes": [], "session": 0}
