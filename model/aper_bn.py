@@ -11,10 +11,14 @@ from utils.toolkit import tensor2numpy, accuracy, generate_confusion_matrix
 num_workers = 0
 
 class Learner(object):
-    def __init__(self, args):
+    def __init__(self, args, session=0):
         self._known_classes = 0
         self.topk = 2
-        self._network = SimpleCosineIncrementalNet(args)
+        self.session = session
+        if self.session == 0:
+            self._network = SimpleCosineIncrementalNet(args)
+        else:
+            self._network = MultiBranchCosineIncrementalNet(args)
         self.batch_size = args.get('batch_size', 128)
         self.tune_epochs = args.get('tune_epochs', 10)
         self.args = args
@@ -24,10 +28,10 @@ class Learner(object):
     def feature_dim(self):
         return self._network.feature_dim
 
-    def _train(self, train_loader, train_loader_for_protonet, session, nb_classes):
+    def _train(self, train_loader, train_loader_for_protonet, nb_classes):
         self._network.to(self._device)
 
-        if session == 0:
+        if self.session == 0:
             self._init_train(train_loader)
             self.construct_dual_branch_network(nb_classes)
         else:
@@ -80,7 +84,7 @@ class Learner(object):
             self._network.fc.weight.data[class_index] = proto
         return model
 
-    def incremental_train(self, data_manager, session):
+    def incremental_train(self, data_manager):
         print('APER BN: Incremental Train')
         self.data_manager = data_manager
         
@@ -98,7 +102,7 @@ class Learner(object):
         train_dataset_for_protonet = data_manager.get_dataset(source="train", mode="test")
         self.train_loader_for_protonet = DataLoader(train_dataset_for_protonet, batch_size=self.batch_size, shuffle=True, num_workers=num_workers)
 
-        self._train(self.train_loader, self.train_loader_for_protonet, session, self._total_classes)
+        self._train(self.train_loader, self.train_loader_for_protonet, self._total_classes)
 
     def construct_dual_branch_network(self, nb_classes):
         print('APER BN: Constructing MultiBranchCosineIncrementalNet')

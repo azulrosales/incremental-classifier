@@ -19,19 +19,22 @@ def train(args):
     print_args(args)
     
     data_manager = DataManager(args["seed"])
-    model = Learner(args)
 
     try:
         checkpoint = torch.load("model_checkpoint.pth")
-        model._network.load_state_dict(checkpoint["model_state"])
         metadata = checkpoint["metadata"]
-        logging.info('Loaded metadata for session {}'.format(metadata["session"]), metadata)
+        session = metadata["session"]
+        logging.info('Loaded metadata for session {}'.format("session"))
+        print(metadata)
+        model = Learner(args, session)
+        model._network.load_state_dict(checkpoint["model_state"])
     except FileNotFoundError:
         logging.warning("No checkpoint found!")
+        model = Learner(args)
         metadata = {"classes": [], "session": 0}
+        session = 0
         
-    session = metadata["session"]
-    model.incremental_train(data_manager, session)
+    model.incremental_train(data_manager)
     session += 1
 
     known_classes_names = [
