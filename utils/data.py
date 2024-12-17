@@ -41,7 +41,7 @@ class iData(object):
     class_order = np.arange(28).tolist()
 
     def download_data(self):
-        path = kagglehub.dataset_download("muhammad0subhan/fruit-and-vegetable-disease-healthy-vs-rotten") + '/Fruit And Vegetable Diseases Dataset'
+        path = '/data'
         data = ImageFolder(root=path)
 
         try:

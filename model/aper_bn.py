@@ -13,8 +13,10 @@ num_workers = 0
 class Learner(object):
     def __init__(self, args):
         self._known_classes = 0
+        self.topk = 2
         self._network = SimpleCosineIncrementalNet(args)
         self.batch_size = 128
+        self.tune_epochs = args.get('tuned_epoch', 10)
         self.init_epoch = args.get("init_epoch", 40)
         self.epochs = args.get("epochs", 80)
         self.args = args
@@ -24,12 +26,12 @@ class Learner(object):
     def feature_dim(self):
         return self._network.feature_dim
 
-    def _train(self, train_loader, train_loader_for_protonet, session):
+    def _train(self, train_loader, train_loader_for_protonet, session, nb_classes):
         self._network.to(self._device)
 
         if session == 0:
             self._init_train(train_loader)
-            self.construct_dual_branch_network()
+            self.construct_dual_branch_network(nb_classes)
         else:
             pass
 
@@ -45,7 +47,7 @@ class Learner(object):
         self.clear_running_mean()
 
         # Adapt to the current data via forward passing
-        prog_bar = tqdm(range(self.args['tuned_epoch']), desc='Adapting to new data')
+        prog_bar = tqdm(range(self.tune_epochs), desc='Adapting to new data')
         with torch.no_grad():
             for epoch in prog_bar:
                 self._network.train()
@@ -72,9 +74,7 @@ class Learner(object):
 
         print('APER BN: Replacing FC layer')
         class_list = np.unique(self.train_dataset.labels)
-        print(class_list)
         for class_index in class_list:
-            print(class_index)
             print('Replacing...', class_index)
             data_index = (label_list == class_index).nonzero().squeeze(-1)
             embedding = embedding_list[data_index]
@@ -100,13 +100,12 @@ class Learner(object):
         train_dataset_for_protonet = data_manager.get_dataset(source="train", mode="test")
         self.train_loader_for_protonet = DataLoader(train_dataset_for_protonet, batch_size=self.batch_size, shuffle=True, num_workers=num_workers)
 
-        self._train(self.train_loader, self.train_loader_for_protonet, session)
+        self._train(self.train_loader, self.train_loader_for_protonet, session, self._total_classes)
 
-
-    def construct_dual_branch_network(self):
+    def construct_dual_branch_network(self, nb_classes):
         print('APER BN: Constructing MultiBranchCosineIncrementalNet')
         network = MultiBranchCosineIncrementalNet(self.args)
-        network.construct_dual_branch_network(self._network)
+        network.construct_dual_branch_network(self._network, nb_classes)
         self._network = network.to(self._device)
 
     def clear_running_mean(self):
@@ -139,7 +138,6 @@ class Learner(object):
 
         # print(running_dict[key_name]['mean'],running_dict[key_name]['var'],running_dict[key_name]['nbt'])
         # print(component.running_mean, component.running_var, component.num_batches_tracked)
-
 
     def after_task(self):
         self._known_classes = self._total_classes

@@ -113,11 +113,11 @@ class MultiBranchCosineIncrementalNet(BaseNet):
         out.update({"features": features})
         return out
         
-    def construct_dual_branch_network(self, tuned_model):
+    def construct_dual_branch_network(self, tuned_model, nb_classes):
         self.convnets.append(get_convnet(self.args)) # the pretrained model itself
 
         self.convnets.append(tuned_model.convnet) # adapted tuned model
     
         self._feature_dim = self.convnets[0].out_dim * len(self.convnets) 
-        self.fc=self.generate_fc(self._feature_dim,self.args['init_cls'])
+        self.fc=self.generate_fc(self._feature_dim, nb_classes) 
         
