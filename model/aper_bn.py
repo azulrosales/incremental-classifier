@@ -15,10 +15,8 @@ class Learner(object):
         self._known_classes = 0
         self.topk = 2
         self._network = SimpleCosineIncrementalNet(args)
-        self.batch_size = 128
-        self.tune_epochs = args.get('tuned_epoch', 10)
-        self.init_epoch = args.get("init_epoch", 40)
-        self.epochs = args.get("epochs", 80)
+        self.batch_size = args.get('batch_size', 128)
+        self.tune_epochs = args.get('tune_epochs', 10)
         self.args = args
         self._device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
