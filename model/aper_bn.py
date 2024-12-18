@@ -16,7 +16,7 @@ class Learner(object):
         self._device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.args = args
         self.topk = 2
-        self._model_state = metadata["model_state"]
+        #self._model_state = metadata["model_state"]
         self._known_classes = len(metadata["classes"])
         self._session = metadata["session"]
         self._create_network()
@@ -117,10 +117,6 @@ class Learner(object):
             from convs.resnet import resnet18
             self._network.convnets[0] = resnet18.eval()
             self._network.convnets[1] = resnet18.eval()
-            convnet_0_params = {k: v for k, v in self._model_state.items() if k.startswith('convnets.0')}
-            convnet_1_params = {k: v for k, v in self._model_state.items() if k.startswith('convnets.1')}
-            self._network.convnets[0].load_state_dict(convnet_0_params)
-            self._network.convnets[1].load_state_dict(convnet_1_params)
 
     def clear_running_mean(self):
         print('APER BN: Cleaning Running Mean')
