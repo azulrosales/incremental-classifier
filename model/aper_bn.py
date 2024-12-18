@@ -12,6 +12,7 @@ num_workers = 0
 
 class Learner(object):
     def __init__(self, args, metadata=None):
+        self._device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.args = args
         self.topk = 2
         self._known_classes = len(metadata["classes"])
@@ -19,7 +20,6 @@ class Learner(object):
         self._create_network()
         self.batch_size = args.get('batch_size', 128)
         self.tune_epochs = args.get('tune_epochs', 10)
-        self._device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     @property
     def feature_dim(self):
