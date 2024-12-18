@@ -112,7 +112,7 @@ class Learner(object):
             self._network = SimpleCosineIncrementalNet(self.args)
         else:
             self._network = MultiBranchCosineIncrementalNet(self.args)
-            #self.construct_dual_branch_network(self._total_classes)
+            self.construct_dual_branch_network(self._total_classes)
 
     def clear_running_mean(self):
         print('APER BN: Cleaning Running Mean')
