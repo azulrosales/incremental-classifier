@@ -115,8 +115,8 @@ class Learner(object):
         else:
             self._network = MultiBranchCosineIncrementalNet(self.args)
             from convs.resnet import resnet18
-            self._network.convnets[0] = resnet18.eval()
-            self._network.convnets[1] = resnet18.eval()
+            self._network.convnets.append(resnet18(args=self.args))
+            self._network.convnets.append(resnet18(args=self.args))
 
     def clear_running_mean(self):
         print('APER BN: Cleaning Running Mean')
