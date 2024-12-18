@@ -30,7 +30,7 @@ class Learner(object):
     def _train(self, train_loader, train_loader_for_protonet):
         self._network.to(self._device)
 
-        if self.session == 0:
+        if self._session == 0:
             self._init_train(train_loader)
             self.construct_dual_branch_network(self._total_classes)
         else:
@@ -110,7 +110,7 @@ class Learner(object):
         self._network = network.to(self._device)
 
     def _create_network(self):
-        if self.session == 0:
+        if self._session == 0:
             self._network = SimpleCosineIncrementalNet(self.args)
         else:
             self._network = MultiBranchCosineIncrementalNet(self.args)
