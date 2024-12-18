@@ -5,6 +5,7 @@ from tqdm import tqdm
 from torch.utils.data import DataLoader
 from model.inc_net import SimpleCosineIncrementalNet, MultiBranchCosineIncrementalNet
 from utils.toolkit import tensor2numpy, accuracy, generate_confusion_matrix
+from convs.resnet import resnet18
 
 # Tune the model (with forward BN) at first session, and then conduct simple shot.
 
@@ -15,8 +16,9 @@ class Learner(object):
         self._device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.args = args
         self.topk = 2
+        self._model_state = metadata["model_state"]
         self._known_classes = len(metadata["classes"])
-        self.session = metadata["session"]
+        self._session = metadata["session"]
         self._create_network()
         self.batch_size = args.get('batch_size', 128)
         self.tune_epochs = args.get('tune_epochs', 10)
@@ -112,7 +114,13 @@ class Learner(object):
             self._network = SimpleCosineIncrementalNet(self.args)
         else:
             self._network = MultiBranchCosineIncrementalNet(self.args)
-            self.construct_dual_branch_network()
+            from convs.resnet import resnet18
+            self._network.convnets[0] = resnet18.eval()
+            self._network.convnets[1] = resnet18.eval()
+            convnet_0_params = {k: v for k, v in self._model_state.items() if k.startswith('convnets.0')}
+            convnet_1_params = {k: v for k, v in self._model_state.items() if k.startswith('convnets.1')}
+            self._network.convnets[0].load_state_dict(convnet_0_params)
+            self._network.convnets[1].load_state_dict(convnet_1_params)
 
     def clear_running_mean(self):
         print('APER BN: Cleaning Running Mean')
