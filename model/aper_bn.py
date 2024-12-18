@@ -11,11 +11,11 @@ from utils.toolkit import tensor2numpy, accuracy, generate_confusion_matrix
 num_workers = 0
 
 class Learner(object):
-    def __init__(self, args, session=0):
+    def __init__(self, args, metadata=None):
         self.args = args
-        self._known_classes = 0
         self.topk = 2
-        self.session = session
+        self._known_classes = len(metadata["classes"])
+        self.session = metadata["session"]
         self._create_network()
         self.batch_size = args.get('batch_size', 128)
         self.tune_epochs = args.get('tune_epochs', 10)
@@ -112,7 +112,7 @@ class Learner(object):
             self._network = SimpleCosineIncrementalNet(self.args)
         else:
             self._network = MultiBranchCosineIncrementalNet(self.args)
-            self.construct_dual_branch_network(self._total_classes)
+            self.construct_dual_branch_network(self._known_classes)
 
     def clear_running_mean(self):
         print('APER BN: Cleaning Running Mean')

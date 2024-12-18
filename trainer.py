@@ -26,7 +26,7 @@ def train(args):
         session = metadata["session"]
         logging.info('Loaded metadata for session {}'.format("session"))
         print(metadata)
-        model = Learner(args, session)
+        model = Learner(args, metadata)
         model._network.load_state_dict(checkpoint["model_state"])
     except FileNotFoundError:
         logging.warning("No checkpoint found!")
