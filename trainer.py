@@ -30,8 +30,8 @@ def train(args):
         model._network.load_state_dict(checkpoint["model_state"])
     except FileNotFoundError:
         logging.warning("No checkpoint found!")
-        model = Learner(args)
         metadata = {"classes": [], "session": 0}
+        model = Learner(args, metadata)
         session = 0
         
     model.incremental_train(data_manager)

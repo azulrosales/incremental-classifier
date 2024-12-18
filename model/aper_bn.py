@@ -16,7 +16,6 @@ class Learner(object):
         self._device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.args = args
         self.topk = 2
-        #self._model_state = metadata["model_state"]
         self._known_classes = len(metadata["classes"])
         self._session = metadata["session"]
         self._create_network()
@@ -27,16 +26,16 @@ class Learner(object):
     def feature_dim(self):
         return self._network.feature_dim
 
-    def _train(self, train_loader, train_loader_for_protonet):
+    def _train(self):
         self._network.to(self._device)
 
         if self._session == 0:
-            self._init_train(train_loader)
-            self.construct_dual_branch_network(self._total_classes)
+            self._init_train(self.train_loader)
+            self.construct_dual_branch_network()
         else:
             pass
 
-        self.replace_fc(train_loader_for_protonet, self._network)
+        self.replace_fc(self.train_loader_for_protonet, self._network)
 
     def _init_train(self, train_loader):
         print('APER BN: Initial Training')
@@ -101,12 +100,12 @@ class Learner(object):
         train_dataset_for_protonet = data_manager.get_dataset(source="train", mode="test")
         self.train_loader_for_protonet = DataLoader(train_dataset_for_protonet, batch_size=self.batch_size, shuffle=True, num_workers=num_workers)
 
-        self._train(self.train_loader, self.train_loader_for_protonet, self._total_classes)
+        self._train()
 
     def construct_dual_branch_network(self):
         print('APER BN: Constructing MultiBranchCosineIncrementalNet')
         network = MultiBranchCosineIncrementalNet(self.args)
-        network.construct_dual_branch_network(self._network, self._known_classes)
+        network.construct_dual_branch_network(self._network, self._total_classes)
         self._network = network.to(self._device)
 
     def _create_network(self):
@@ -115,8 +114,12 @@ class Learner(object):
         else:
             self._network = MultiBranchCosineIncrementalNet(self.args)
             from convs.resnet import resnet18
+            from convs.linears import CosineLinear
             self._network.convnets.append(resnet18(args=self.args))
             self._network.convnets.append(resnet18(args=self.args))
+            self._network._feature_dim = self._network.convnets[0].out_dim * len(self._network.convnets)
+            self._network.fc = CosineLinear(self._network._feature_dim, self._known_classes)
+            self._network.to(self._device)
 
     def clear_running_mean(self):
         print('APER BN: Cleaning Running Mean')
