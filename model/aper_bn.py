@@ -104,7 +104,7 @@ class Learner(object):
     def construct_dual_branch_network(self):
         print('APER BN: Constructing MultiBranchCosineIncrementalNet')
         network = MultiBranchCosineIncrementalNet(self.args)
-        network.construct_dual_branch_network(self._network, self._total_classes)
+        network.construct_dual_branch_network(self._network, self._known_classes)
         self._network = network.to(self._device)
 
     def _create_network(self):
@@ -112,7 +112,7 @@ class Learner(object):
             self._network = SimpleCosineIncrementalNet(self.args)
         else:
             self._network = MultiBranchCosineIncrementalNet(self.args)
-            self.construct_dual_branch_network(self._known_classes)
+            self.construct_dual_branch_network()
 
     def clear_running_mean(self):
         print('APER BN: Cleaning Running Mean')
