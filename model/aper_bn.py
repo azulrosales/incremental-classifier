@@ -3,7 +3,7 @@ import torch
 import numpy as np
 from tqdm import tqdm
 from torch.utils.data import DataLoader
-from utils.inc_net import SimpleCosineIncrementalNet, MultiBranchCosineIncrementalNet
+from model.inc_net import SimpleCosineIncrementalNet, MultiBranchCosineIncrementalNet
 from utils.toolkit import tensor2numpy, accuracy, generate_confusion_matrix
 
 # Tune the model (with forward BN) at first session, and then conduct simple shot.
@@ -89,9 +89,9 @@ class Learner(object):
         self.data_manager = data_manager
         
         train_dataset = data_manager.get_dataset(source="train", mode="train")
-        self._total_classes = len(np.unique(train_dataset.labels))
         self.train_dataset = train_dataset
         self.train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=num_workers)
+        self._total_classes = len(np.unique(train_dataset.labels))
         
         self._network.update_fc(self._total_classes)
         logging.info("Learning on {}-{}".format(self._known_classes, self._total_classes-1))

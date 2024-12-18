@@ -85,7 +85,6 @@ class MultiBranchCosineIncrementalNet(BaseNet):
 
         self.convnets = nn.ModuleList()
         self.args = args
-        self.modeltype = 'cnn'
 
     def update_fc(self, nb_classes, nextperiod_initialization=None):
         print('MultiBranchCosineIncrementalNet: Update FC')
@@ -119,5 +118,5 @@ class MultiBranchCosineIncrementalNet(BaseNet):
         self.convnets.append(tuned_model.convnet) # adapted tuned model
     
         self._feature_dim = self.convnets[0].out_dim * len(self.convnets) 
-        self.fc=self.generate_fc(self._feature_dim, nb_classes) 
+        self.fc = self.generate_fc(self._feature_dim, nb_classes) 
         
