@@ -37,15 +37,8 @@ def train(args):
     model.incremental_train(data_manager)
     session += 1
 
-    known_classes_names = [
-        data_manager._class_mapping[class_id]
-        for class_id in np.arange(model._known_classes, model._total_classes)
-    ]
-
-    if session > 0:
-        metadata["classes"].extend(known_classes_names)
-    else:
-        metadata["classes"] = known_classes_names
+    new_classes_names = data_manager._class_names
+    metadata["classes"].extend(cls for cls in new_classes_names if cls not in metadata["classes"])
 
     metadata["session"] = session
 

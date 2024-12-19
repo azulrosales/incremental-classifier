@@ -74,6 +74,7 @@ class Learner(object):
 
         print('APER BN: Replacing FC layer')
         class_list = np.unique(self.train_dataset.labels)
+        class_list = [2, 3]
         for class_index in class_list:
             print('Replacing...', class_index)
             data_index = (label_list == class_index).nonzero().squeeze(-1)
@@ -89,10 +90,10 @@ class Learner(object):
         train_dataset = data_manager.get_dataset(source="train", mode="train")
         self.train_dataset = train_dataset
         self.train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=num_workers)
-        self._total_classes = len(np.unique(train_dataset.labels))
+        self._curr_classes = len(np.unique(train_dataset.labels))
         
-        self._network.update_fc(self._total_classes)
-        logging.info("Learning on {}-{}".format(self._known_classes, self._total_classes-1))
+        self._network.update_fc(self._known_classes + self._curr_classes)
+        logging.info("Learning on {}-{}".format(self._known_classes, self._curr_classes-1))
         
         test_dataset = data_manager.get_dataset(source="test", mode="test")
         self.test_loader = DataLoader(test_dataset, batch_size=self.batch_size, shuffle=False, num_workers=num_workers)
@@ -105,7 +106,7 @@ class Learner(object):
     def construct_dual_branch_network(self):
         print('APER BN: Constructing MultiBranchCosineIncrementalNet')
         network = MultiBranchCosineIncrementalNet(self.args)
-        network.construct_dual_branch_network(self._network, self._total_classes)
+        network.construct_dual_branch_network(self._network, self._curr_classes)
         self._network = network.to(self._device)
 
     def _create_network(self):
@@ -153,7 +154,7 @@ class Learner(object):
         # print(component.running_mean, component.running_var, component.num_batches_tracked)
 
     def after_task(self):
-        self._known_classes = self._total_classes
+        self._known_classes = self._known_classes + self._curr_classes
 
     def _evaluate(self, y_pred, y_true, data_manager):
         ret = {}
