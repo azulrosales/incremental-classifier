@@ -32,22 +32,6 @@ def accuracy(y_pred, y_true, nb_old, data_manager):
             (y_pred[idxes] == y_true[idxes]).sum() * 100 / len(idxes), decimals=2
         )
 
-    # Old classes accuracy
-    idxes = np.where(y_true < nb_old)[0]
-    all_acc["old"] = (
-        0
-        if len(idxes) == 0
-        else np.around(
-            (y_pred[idxes] == y_true[idxes]).sum() * 100 / len(idxes), decimals=2
-        )
-    )
-
-    # New classes accuracy
-    idxes = np.where(y_true >= nb_old)[0]
-    all_acc["new"] = np.around(
-        (y_pred[idxes] == y_true[idxes]).sum() * 100 / len(idxes), decimals=2
-    )
-
     return all_acc
 
 def generate_confusion_matrix(y_true, y_pred, data_manager):
