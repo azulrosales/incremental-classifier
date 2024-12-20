@@ -10,9 +10,6 @@ class DataManager(object):
     def __init__(self, known_classes):
         self._setup_data(known_classes)
 
-    def get_total_classnum(self):
-        return len(self._class_order)
-
     def get_dataset(self, source, mode):
         if source == "train":
             data, targets = self._train_data, self._train_targets
@@ -45,30 +42,25 @@ class DataManager(object):
         self._test_trsf = idata.test_trsf
         self._common_trsf = idata.common_trsf
 
-        print(known_classes)
         new_classes = [cls for cls in self._class_names if cls not in known_classes]
-        print(new_classes)
-        last_idx = len(known_classes)
-        known_classes_idxs = list(range(last_idx))
-        classes_idxs = list(range(len(self._class_names)))
-        print('classes idxs', classes_idxs)
-        new_idxs = list(range(last_idx, last_idx + len(new_classes)))
-        print('new classes idxs', new_idxs)
-        self._class_order = (known_classes_idxs + new_idxs)
-        print('class order', self._class_order)
+        curr_idxs = list(range(len(self._class_names)))
+
+        if len(new_classes) > 0:
+            last_idx = len(known_classes)
+            new_idxs = list(range(last_idx, last_idx + len(new_classes)))
+        else:
+            new_idxs = [known_classes.index(cls) for cls in self._class_names if cls in known_classes]
+            replaced_classes = [cls for cls in self._class_names if cls in known_classes]
+            logging.warning(f"Knowledge for {replaced_classes} will be replaced!!!")
 
         # Map indices
-        self._train_targets = remap_targets(self._train_targets, classes_idxs, new_idxs)
-        self._test_targets = remap_targets(self._test_targets, classes_idxs, new_idxs)
-        print('train targets', np.unique(self._train_targets))
+        self._train_targets = remap_targets(self._train_targets, curr_idxs, new_idxs)
+        self._test_targets = remap_targets(self._test_targets, curr_idxs, new_idxs)
 
         # Map class names to the new indices
-        self._class_mapping = {
-            new_idx: self._class_names[old_idx]
-            for new_idx, old_idx in enumerate(self._class_order)
-        }
+        all_classes = known_classes + new_classes
+        self._class_mapping = {idx: name for idx, name in enumerate(all_classes)}
 
-        logging.info(f"Class order: {self._class_order}")
         logging.info(f"Class name mapping: {self._class_mapping}")
 
 

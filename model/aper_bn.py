@@ -73,7 +73,6 @@ class Learner(object):
 
         print('APER BN: Replacing FC layer')
         class_list = np.unique(self.train_dataset.labels)
-        #class_list = [2, 3]
         for class_index in class_list:
             print('Replacing...', class_index)
             data_index = (label_list == class_index).nonzero().squeeze(-1)
