@@ -5,7 +5,6 @@ from tqdm import tqdm
 from torch.utils.data import DataLoader
 from model.inc_net import SimpleCosineIncrementalNet, MultiBranchCosineIncrementalNet
 from utils.toolkit import tensor2numpy, accuracy, generate_confusion_matrix
-from convs.resnet import resnet18
 
 # Tune the model (with forward BN) at first session, and then conduct simple shot.
 
@@ -74,7 +73,7 @@ class Learner(object):
 
         print('APER BN: Replacing FC layer')
         class_list = np.unique(self.train_dataset.labels)
-        class_list = [2, 3]
+        #class_list = [2, 3]
         for class_index in class_list:
             print('Replacing...', class_index)
             data_index = (label_list == class_index).nonzero().squeeze(-1)
@@ -83,7 +82,7 @@ class Learner(object):
             self._network.fc.weight.data[class_index] = proto
         return model
 
-    def incremental_train(self, data_manager):
+    def incremental_train(self, data_manager, total_classes):
         print('APER BN: Incremental Train')
         self.data_manager = data_manager
         
@@ -91,9 +90,10 @@ class Learner(object):
         self.train_dataset = train_dataset
         self.train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=num_workers)
         self._curr_classes = len(np.unique(train_dataset.labels))
+        self._total_classes = total_classes
         
-        self._network.update_fc(self._known_classes + self._curr_classes)
-        logging.info("Learning on {}-{}".format(self._known_classes, self._curr_classes-1))
+        self._network.update_fc(self._total_classes)
+        # logging.info("Learning on {}-{}".format(self._known_classes, self._curr_classes-1)) # FIX PENDING: indexes
         
         test_dataset = data_manager.get_dataset(source="test", mode="test")
         self.test_loader = DataLoader(test_dataset, batch_size=self.batch_size, shuffle=False, num_workers=num_workers)
@@ -154,7 +154,7 @@ class Learner(object):
         # print(component.running_mean, component.running_var, component.num_batches_tracked)
 
     def after_task(self):
-        self._known_classes = self._known_classes + self._curr_classes
+        self._known_classes = self._total_classes
 
     def _evaluate(self, y_pred, y_true, data_manager):
         ret = {}

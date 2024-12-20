@@ -18,13 +18,10 @@ def train(args):
     set_random()
     print_args(args)
     
-    data_manager = DataManager(args["seed"])
-
     try:
         checkpoint = torch.load("model_checkpoint.pth")
         metadata = checkpoint["metadata"]
-        session = metadata["session"]
-        logging.info('Loaded metadata for session {}'.format("session"))
+        logging.info('Loaded metadata for session {}'.format(metadata["session"]))
         print(metadata)
         model = Learner(args, metadata)
         model._network.load_state_dict(checkpoint["model_state"])
@@ -32,17 +29,16 @@ def train(args):
         logging.warning("No checkpoint found!")
         metadata = {"classes": [], "session": 0}
         model = Learner(args, metadata)
-        session = 0
         
-    model.incremental_train(data_manager)
-    session += 1
+    data_manager = DataManager(known_classes=metadata["classes"])
 
     new_classes_names = data_manager._class_names
     metadata["classes"].extend(cls for cls in new_classes_names if cls not in metadata["classes"])
+    
+    model.incremental_train(data_manager, total_classes=len(metadata["classes"]))
+    metadata["session"] += 1
 
-    metadata["session"] = session
-
-    logging.info("Saving the model after session {}".format(session))
+    logging.info("Saving the model after session {}".format(metadata["session"]))
     torch.save({"model_state": model._network.state_dict(), "metadata": metadata}, "model_checkpoint.pth")
 
     accuracies = model.eval_task(data_manager)

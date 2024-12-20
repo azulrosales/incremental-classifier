@@ -7,8 +7,8 @@ from utils.data import iData
 
 
 class DataManager(object):
-    def __init__(self, seed):
-        self._setup_data(seed)
+    def __init__(self, known_classes):
+        self._setup_data(known_classes)
 
     def get_total_classnum(self):
         return len(self._class_order)
@@ -30,7 +30,7 @@ class DataManager(object):
 
         return DummyDataset(data, targets, trsf, self.use_path)
 
-    def _setup_data(self, seed, shuffle=True):
+    def _setup_data(self, known_classes):
         idata = iData()
         idata.download_data()
 
@@ -45,24 +45,30 @@ class DataManager(object):
         self._test_trsf = idata.test_trsf
         self._common_trsf = idata.common_trsf
 
-        # Order
-        order = [i for i in range(len(np.unique(self._train_targets)))]
-        if shuffle:
-            np.random.seed(seed)
-            order = np.random.permutation(len(order)).tolist()
-        else:
-            order = idata.class_order
-        self._class_order = order
-        logging.info(f"Class order: {self._class_order}")
+        print(known_classes)
+        new_classes = [cls for cls in self._class_names if cls not in known_classes]
+        print(new_classes)
+        last_idx = len(known_classes)
+        known_classes_idxs = list(range(last_idx))
+        classes_idxs = list(range(len(self._class_names)))
+        print('classes idxs', classes_idxs)
+        new_idxs = list(range(last_idx, last_idx + len(new_classes)))
+        print('new classes idxs', new_idxs)
+        self._class_order = (known_classes_idxs + new_idxs)
+        print('class order', self._class_order)
 
         # Map indices
-        self._train_targets = _map_new_class_index(self._train_targets, self._class_order)
-        self._test_targets = _map_new_class_index(self._test_targets, self._class_order)
+        self._train_targets = remap_targets(self._train_targets, classes_idxs, new_idxs)
+        self._test_targets = remap_targets(self._test_targets, classes_idxs, new_idxs)
+        print('train targets', np.unique(self._train_targets))
 
         # Map class names to the new indices
-        self._class_mapping = {new_idx: self._class_names[old_idx] for new_idx, old_idx in enumerate(self._class_order)}
+        self._class_mapping = {
+            new_idx: self._class_names[old_idx]
+            for new_idx, old_idx in enumerate(self._class_order)
+        }
 
-        # Logging the mapping
+        logging.info(f"Class order: {self._class_order}")
         logging.info(f"Class name mapping: {self._class_mapping}")
 
 
@@ -87,8 +93,11 @@ class DummyDataset(Dataset):
         return idx, image, label
 
 
-def _map_new_class_index(y, order):
-    return np.array(list(map(lambda x: order.index(x), y)))
+def remap_targets(targets, idxs, new_idxs):
+    mapping = {old: new for old, new in zip(idxs, new_idxs)}
+    remapped_targets = np.vectorize(mapping.get)(targets)
+    
+    return remapped_targets
 
 def pil_loader(path):
     """
