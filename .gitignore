@@ -2,7 +2,8 @@ __pycache__/
 .ipynb_checkpoints/
 venv/
 data/
-data-archive/
+eval-data/
+temp/
 *.pth
 logs/
 confusion_matrices/

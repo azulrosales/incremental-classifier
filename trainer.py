@@ -1,7 +1,6 @@
 import sys
 import logging
 import torch
-import numpy as np
 from model.aper_bn import Learner
 from utils.data_manager import DataManager
 

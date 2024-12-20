@@ -29,7 +29,7 @@ class DataManager(object):
 
     def _setup_data(self, known_classes):
         idata = iData()
-        idata.download_data()
+        idata.load_data()
 
         # Data
         self._train_data, self._train_targets = idata.train_data, idata.train_targets
@@ -55,7 +55,7 @@ class DataManager(object):
 
         # Map indices
         self._train_targets = remap_targets(self._train_targets, curr_idxs, new_idxs)
-        self._test_targets = remap_targets(self._test_targets, curr_idxs, new_idxs)
+        ###self._test_targets = remap_targets(self._test_targets, curr_idxs, new_idxs)
 
         # Map class names to the new indices
         all_classes = known_classes + new_classes

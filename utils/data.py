@@ -1,8 +1,9 @@
-import kagglehub
+import os
 import numpy as np
 from torch.utils.data import random_split
 from torchvision import transforms
 from torchvision.datasets import ImageFolder
+from shutil import copy2
 from utils.toolkit import split_images_labels
 
 
@@ -38,9 +39,22 @@ class iData(object):
     test_trsf = build_transform(False) 
     common_trsf = []
 
-    class_order = np.arange(28).tolist()
+    class_order = np.arange(28).tolist
 
-    def download_data(self):
+    def save_test_data(self, test_imgs):
+        path = 'eval-data/'
+        os.makedirs(path, exist_ok=True)
+        for img_path, _ in test_imgs:
+            class_folder = os.path.join(path, os.path.basename(os.path.dirname(img_path)))
+            os.makedirs(class_folder, exist_ok=True)
+            copy2(img_path, class_folder)
+
+    def load_test_data(self):
+        path = 'eval-data/'
+        data = ImageFolder(root=path)
+        return data.imgs
+
+    def load_data(self):
         path = 'data/'
         data = ImageFolder(root=path)
 
@@ -53,12 +67,19 @@ class iData(object):
             train_dataset, test_dataset = random_split(data, [train_size, test_size])
 
         train_imgs = [data.imgs[i] for i in train_dataset.indices]
-        test_imgs = [data.imgs[i] for i in test_dataset.indices]
+        new_test_imgs = [data.imgs[i] for i in test_dataset.indices] # test imgs for the new classes !!!
             
+        # Save test data for future evaluation
+        self.save_test_data(new_test_imgs) # TO DO: FIX INDEXES BEFORE SAVING 
+        # Load known classes test data
+        known_test_imgs = self.load_test_data()
+        test_imgs = known_test_imgs + new_test_imgs
+
         self.train_data, self.train_targets = split_images_labels(train_imgs)
-        self.test_data, self.test_targets = split_images_labels(test_imgs)
+        self.test_data, self.test_targets = split_images_labels(test_imgs) 
 
         self.class_names = data.classes
+        # Print number of training samples per class
         targets, n_samples = np.unique(self.train_targets, return_counts=True)
         samples_per_class = {self.class_names[target]: count for target, count in zip(targets, n_samples)}
         print('Train samples per class:', samples_per_class)
