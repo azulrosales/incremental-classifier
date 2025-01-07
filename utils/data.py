@@ -4,7 +4,7 @@ from torch.utils.data import random_split
 from torchvision import transforms
 from torchvision.datasets import ImageFolder
 from shutil import copy2
-from utils.toolkit import split_images_labels
+from utils.toolkit import split_images_labels, merge_img_lists
 
 
 def build_transform(is_train):
@@ -51,6 +51,9 @@ class iData(object):
 
     def load_test_data(self):
         path = 'eval-data/'
+        if not os.path.exists(path):
+            print(f"Path '{path}' does not exist. No test data loaded.")
+            return []
         data = ImageFolder(root=path)
         return data.imgs
 
@@ -69,11 +72,12 @@ class iData(object):
         train_imgs = [data.imgs[i] for i in train_dataset.indices]
         new_test_imgs = [data.imgs[i] for i in test_dataset.indices] # test imgs for the new classes !!!
             
-        # Save test data for future evaluation
-        self.save_test_data(new_test_imgs) # TO DO: FIX INDEXES BEFORE SAVING 
         # Load known classes test data
         known_test_imgs = self.load_test_data()
-        test_imgs = known_test_imgs + new_test_imgs
+        test_imgs = merge_img_lists(known_test_imgs, new_test_imgs)
+
+        # Save test data for future evaluation
+        self.save_test_data(new_test_imgs) # TO DO: FIX INDEXES BEFORE SAVING 
 
         self.train_data, self.train_targets = split_images_labels(train_imgs)
         self.test_data, self.test_targets = split_images_labels(test_imgs) 

@@ -1,7 +1,9 @@
 import os
+import hashlib
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+from PIL import Image
 from sklearn.metrics import confusion_matrix
 from datetime import datetime
 
@@ -62,3 +64,18 @@ def split_images_labels(imgs):
         labels.append(item[1])
 
     return np.array(images), np.array(labels)
+
+def get_image_hash(img_path):
+    '''
+    Generates a hash for an image based on its pixel data
+    '''
+    with Image.open(img_path) as img:
+        return hashlib.md5(img.tobytes()).hexdigest()
+
+def merge_img_lists(known_imgs, new_imgs):
+    '''
+    Combines two lists of images while removing duplicates
+    '''
+    seen_hashes = {get_image_hash(img[0]) for img in known_imgs}
+    unique_new_imgs = [img for img in new_imgs if get_image_hash(img[0]) not in seen_hashes]
+    return known_imgs + unique_new_imgs
