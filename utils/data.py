@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import torch
 from torch.utils.data import random_split
 from torchvision import transforms
 from torchvision.datasets import ImageFolder
@@ -62,22 +63,24 @@ class iData(object):
         data = ImageFolder(root=path)
 
         try:
-            train_dataset, test_dataset = random_split(data, [0.7, 0.3])
+            train_dataset, test_dataset = random_split(data, [0.7, 0.3], generator=torch.Generator().manual_seed(42))
         except ValueError:
             # For older PyTorch versions
             train_size = int(0.7 * len(data))
             test_size = len(data) - train_size
-            train_dataset, test_dataset = random_split(data, [train_size, test_size])
+            train_dataset, test_dataset = random_split(data, [train_size, test_size], generator=torch.Generator().manual_seed(42))
 
         train_imgs = [data.imgs[i] for i in train_dataset.indices]
-        new_test_imgs = [data.imgs[i] for i in test_dataset.indices] # test imgs for the new classes !!!
+        new_test_imgs = [data.imgs[i] for i in test_dataset.indices]
             
         # Load known classes test data
         known_test_imgs = self.load_test_data()
         test_imgs = merge_img_lists(known_test_imgs, new_test_imgs)
 
         # Save test data for future evaluation
-        self.save_test_data(new_test_imgs) # TO DO: FIX INDEXES BEFORE SAVING 
+        self.save_test_data(new_test_imgs) 
+
+        print('Test imgs:', len(test_imgs))
 
         self.train_data, self.train_targets = split_images_labels(train_imgs)
         self.test_data, self.test_targets = split_images_labels(test_imgs) 
