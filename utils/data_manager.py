@@ -1,9 +1,8 @@
-import logging
-import numpy as np
 from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
 from utils.data import iData
+from utils.toolkit import pil_loader
 
 
 class DataManager(object):
@@ -25,43 +24,23 @@ class DataManager(object):
         else:
             raise ValueError("Unknown mode {}.".format(mode))
 
-        return DummyDataset(data, targets, trsf, self.use_path)
+        return DummyDataset(data, targets, trsf, self._use_path)
 
     def _setup_data(self, known_classes):
         idata = iData()
-        idata.load_data()
+        idata.load_data(known_classes)
 
         # Data
-        self._train_data, self._train_targets = idata.train_data, idata.train_targets
-        self._test_data, self._test_targets = idata.test_data, idata.test_targets
-        self._class_names = idata.class_names
-        self.use_path = idata.use_path
+        self._train_data, self._train_targets = idata._train_data, idata._train_targets
+        self._test_data, self._test_targets = idata._test_data, idata._test_targets
+        self._class_names = idata._class_names
+        self._use_path = idata.use_path
+        self._class_mapping = idata._class_mapping
 
         # Transforms
         self._train_trsf = idata.train_trsf
         self._test_trsf = idata.test_trsf
         self._common_trsf = idata.common_trsf
-
-        new_classes = [cls for cls in self._class_names if cls not in known_classes]
-        curr_idxs = list(range(len(self._class_names)))
-
-        if len(new_classes) > 0:
-            last_idx = len(known_classes)
-            new_idxs = list(range(last_idx, last_idx + len(new_classes)))
-        else:
-            new_idxs = [known_classes.index(cls) for cls in self._class_names if cls in known_classes]
-            replaced_classes = [cls for cls in self._class_names if cls in known_classes]
-            logging.warning(f"Knowledge for {replaced_classes} will be replaced!!!")
-
-        # Map indices
-        self._train_targets = remap_targets(self._train_targets, curr_idxs, new_idxs)
-        ###self._test_targets = remap_targets(self._test_targets, curr_idxs, new_idxs)
-
-        # Map class names to the new indices
-        all_classes = known_classes + new_classes
-        self._class_mapping = {idx: name for idx, name in enumerate(all_classes)}
-
-        logging.info(f"Class name mapping: {self._class_mapping}")
 
 
 class DummyDataset(Dataset):
@@ -83,20 +62,3 @@ class DummyDataset(Dataset):
         label = self.labels[idx]
 
         return idx, image, label
-
-
-def remap_targets(targets, idxs, new_idxs):
-    mapping = {old: new for old, new in zip(idxs, new_idxs)}
-    remapped_targets = np.vectorize(mapping.get)(targets)
-    
-    return remapped_targets
-
-def pil_loader(path):
-    """
-    Ref:
-    https://pytorch.org/docs/stable/_modules/torchvision/datasets/folder.html#ImageFolder
-    """
-    # open path as file to avoid ResourceWarning (https://github.com/python-pillow/Pillow/issues/835)
-    with open(path, "rb") as f:
-        img = Image.open(f)
-        return img.convert("RGB")

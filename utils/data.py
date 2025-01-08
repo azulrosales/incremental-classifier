@@ -1,12 +1,12 @@
 import os
-import numpy as np
 import torch
+import logging
+import numpy as np
 from torch.utils.data import random_split
 from torchvision import transforms
 from torchvision.datasets import ImageFolder
 from shutil import copy2
-from utils.toolkit import split_images_labels, merge_img_lists
-
+from utils.toolkit import split_images_labels, remap_targets
 
 def build_transform(is_train):
     input_size = 224
@@ -40,8 +40,6 @@ class iData(object):
     test_trsf = build_transform(False) 
     common_trsf = []
 
-    class_order = np.arange(28).tolist
-
     def save_test_data(self, test_imgs):
         path = 'eval-data/'
         os.makedirs(path, exist_ok=True)
@@ -58,7 +56,7 @@ class iData(object):
         data = ImageFolder(root=path)
         return data.imgs
 
-    def load_data(self):
+    def load_data(self, known_classes):
         path = 'data/'
         data = ImageFolder(root=path)
 
@@ -71,22 +69,38 @@ class iData(object):
             train_dataset, test_dataset = random_split(data, [train_size, test_size], generator=torch.Generator().manual_seed(42))
 
         train_imgs = [data.imgs[i] for i in train_dataset.indices]
-        new_test_imgs = [data.imgs[i] for i in test_dataset.indices]
-            
-        # Load known classes test data
-        known_test_imgs = self.load_test_data()
-        test_imgs = merge_img_lists(known_test_imgs, new_test_imgs)
+        test_imgs = [data.imgs[i] for i in test_dataset.indices]
 
-        # Save test data for future evaluation
-        self.save_test_data(new_test_imgs) 
+        self._train_data, self._train_targets = split_images_labels(train_imgs)
+        self._test_data, self._test_targets = split_images_labels(test_imgs) 
+        
+        self._class_names = data.classes
 
-        print('Test imgs:', len(test_imgs))
-
-        self.train_data, self.train_targets = split_images_labels(train_imgs)
-        self.test_data, self.test_targets = split_images_labels(test_imgs) 
-
-        self.class_names = data.classes
         # Print number of training samples per class
-        targets, n_samples = np.unique(self.train_targets, return_counts=True)
-        samples_per_class = {self.class_names[target]: count for target, count in zip(targets, n_samples)}
+        targets, n_samples = np.unique(self._train_targets, return_counts=True)
+        samples_per_class = {self._class_names[target]: count for target, count in zip(targets, n_samples)}
         print('Train samples per class:', samples_per_class)
+
+        new_classes = [cls for cls in self._class_names if cls not in known_classes]
+        curr_idxs = list(range(len(self._class_names)))
+
+        if len(new_classes) > 0:
+            last_idx = len(known_classes)
+            new_idxs = list(range(last_idx, last_idx + len(new_classes)))
+        else:
+            new_idxs = [known_classes.index(cls) for cls in self._class_names if cls in known_classes]
+            replaced_classes = [cls for cls in self._class_names if cls in known_classes]
+            logging.warning(f"Knowledge for {replaced_classes} will be replaced!!!")
+
+        # Map indices
+        self._train_targets = remap_targets(self._train_targets, curr_idxs, new_idxs)
+        self._test_targets = remap_targets(self._test_targets, curr_idxs, new_idxs)
+
+        # Map class names to the new indices
+        all_classes = known_classes + new_classes
+        self._class_mapping = {idx: name for idx, name in enumerate(all_classes)}
+
+        logging.info(f"Class name mapping: {self._class_mapping}")
+
+        remapped_test_imgs = [(img_path, self._class_mapping[label]) for img_path, label in test_imgs]
+        self.save_test_data(remapped_test_imgs)

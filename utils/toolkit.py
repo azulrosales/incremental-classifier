@@ -56,7 +56,9 @@ def generate_confusion_matrix(y_true, y_pred, data_manager):
     plt.close()
 
 def split_images_labels(imgs):
-    # split trainset.imgs in ImageFolder
+    '''
+    Splits trainset.imgs in ImageFolder
+    '''
     images = []
     labels = []
     for item in imgs:
@@ -79,3 +81,19 @@ def merge_img_lists(known_imgs, new_imgs):
     seen_hashes = {get_image_hash(img[0]) for img in known_imgs}
     unique_new_imgs = [img for img in new_imgs if get_image_hash(img[0]) not in seen_hashes]
     return known_imgs + unique_new_imgs
+
+def remap_targets(targets, idxs, new_idxs):
+    mapping = {old: new for old, new in zip(idxs, new_idxs)}
+    remapped_targets = np.vectorize(mapping.get)(targets)
+    
+    return remapped_targets
+
+def pil_loader(path):
+    """
+    Ref:
+    https://pytorch.org/docs/stable/_modules/torchvision/datasets/folder.html#ImageFolder
+    """
+    # open path as file to avoid ResourceWarning (https://github.com/python-pillow/Pillow/issues/835)
+    with open(path, "rb") as f:
+        img = Image.open(f)
+        return img.convert("RGB")
