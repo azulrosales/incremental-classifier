@@ -1,6 +1,5 @@
 import os
 import numpy as np
-from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
 from torchvision.datasets import ImageFolder
@@ -32,7 +31,7 @@ class DataManager(object):
         else:
             raise ValueError("Unknown mode {}.".format(mode))
 
-        return DummyDataset(data, targets, trsf, self._use_path)
+        return DummyDataset(data, targets, trsf)
 
     def _setup_data(self, known_classes):
         idata = iData()
@@ -42,7 +41,6 @@ class DataManager(object):
         self._train_data, self._train_targets = idata._train_data, idata._train_targets
         self._test_data, self._test_targets = idata._test_data, idata._test_targets
         self._class_names = idata._class_names
-        self._use_path = idata.use_path
         self._class_mapping = idata._class_mapping
 
         # Transforms
@@ -52,21 +50,16 @@ class DataManager(object):
 
 
 class DummyDataset(Dataset):
-    def __init__(self, images, labels, trsf, use_path=False):
+    def __init__(self, images, labels, trsf):
         assert len(images) == len(labels), "Data size error!"
         self.images = images
         self.labels = labels
         self.trsf = trsf
-        self.use_path = use_path
 
     def __len__(self):
         return len(self.images)
 
     def __getitem__(self, idx):
-        if self.use_path:
-            image = self.trsf(pil_loader(self.images[idx]))
-        else:
-            image = self.trsf(Image.fromarray(self.images[idx]))
+        image = self.trsf(pil_loader(self.images[idx]))
         label = self.labels[idx]
-
         return idx, image, label

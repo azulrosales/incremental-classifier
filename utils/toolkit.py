@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from PIL import Image
+from torchvision import transforms
 from sklearn.metrics import confusion_matrix
 from datetime import datetime
 
@@ -97,3 +98,28 @@ def pil_loader(path):
     with open(path, "rb") as f:
         img = Image.open(f)
         return img.convert("RGB")
+
+def build_transform(is_train):
+    input_size = 224
+    resize_im = input_size > 32
+    if is_train:
+        scale = (0.05, 1.0)
+        ratio = (3. / 4., 4. / 3.)
+        
+        transform = [
+            transforms.RandomResizedCrop(input_size, scale=scale, ratio=ratio),
+            transforms.RandomHorizontalFlip(p=0.5),
+            transforms.ToTensor(),
+        ]
+        return transform
+
+    t = []
+    if resize_im:
+        size = int((256 / 224) * input_size)
+        t.append(
+            transforms.Resize(size, interpolation=3),  # to maintain same ratio w.r.t. 224 images
+        )
+        t.append(transforms.CenterCrop(input_size))
+    t.append(transforms.ToTensor())
+    
+    return t
