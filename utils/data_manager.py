@@ -1,19 +1,27 @@
+import os
+import numpy as np
 from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
+from torchvision.datasets import ImageFolder
 from utils.data import iData
-from utils.toolkit import pil_loader
+from utils.toolkit import pil_loader, split_images_labels
 
 
 class DataManager(object):
     def __init__(self, known_classes):
         self._setup_data(known_classes)
 
-    def get_dataset(self, source, mode):
+    def get_dataset(self, source, mode, load_test_data=True):
         if source == "train":
             data, targets = self._train_data, self._train_targets
         elif source == "test":
-            data, targets = self._test_data, self._test_targets
+            if not os.path.exists('eval-data/') or not load_test_data:
+                data, targets = self._test_data, self._test_targets
+            else:
+                test_imgs = ImageFolder(root='eval-data/')
+                data, targets = split_images_labels(test_imgs.imgs)
+            print(np.unique(targets, return_counts=True))
         else:
             raise ValueError("Unknown data source {}.".format(source))
 

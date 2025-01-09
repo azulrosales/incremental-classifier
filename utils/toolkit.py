@@ -16,7 +16,7 @@ def count_parameters(model, trainable=False):
 def tensor2numpy(x):
     return x.cpu().data.numpy() if x.is_cuda else x.data.numpy()
 
-def accuracy(y_pred, y_true, nb_old, data_manager):
+def accuracy(y_pred, y_true, data_manager):
     assert len(y_pred) == len(y_true), "Data length error."
     all_acc = {}
 

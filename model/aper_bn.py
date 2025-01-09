@@ -1,4 +1,3 @@
-import logging
 import torch
 import numpy as np
 from tqdm import tqdm
@@ -92,7 +91,6 @@ class Learner(object):
         self._total_classes = total_classes
         
         self._network.update_fc(self._total_classes)
-        # logging.info("Learning on {}-{}".format(self._known_classes, self._curr_classes-1)) # FIX PENDING: indexes
         
         test_dataset = data_manager.get_dataset(source="test", mode="test")
         self.test_loader = DataLoader(test_dataset, batch_size=self.batch_size, shuffle=False, num_workers=num_workers)
@@ -157,7 +155,7 @@ class Learner(object):
 
     def _evaluate(self, y_pred, y_true, data_manager):
         ret = {}
-        per_class = accuracy(y_pred.T[0], y_true, self._known_classes, data_manager)
+        per_class = accuracy(y_pred.T[0], y_true, data_manager)
         ret["per_class"] = per_class
         ret["top1"] = per_class["total"]
         ret["top{}".format(self.topk)] = np.around(

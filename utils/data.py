@@ -5,7 +5,7 @@ import numpy as np
 from torch.utils.data import random_split
 from torchvision import transforms
 from torchvision.datasets import ImageFolder
-from shutil import copy2
+from shutil import copyfile
 from utils.toolkit import split_images_labels, remap_targets
 
 def build_transform(is_train):
@@ -40,21 +40,15 @@ class iData(object):
     test_trsf = build_transform(False) 
     common_trsf = []
 
-    def save_test_data(self, test_imgs):
+    def save_test_data(self, img_paths, targets):
         path = 'eval-data/'
         os.makedirs(path, exist_ok=True)
-        for img_path, _ in test_imgs:
-            class_folder = os.path.join(path, os.path.basename(os.path.dirname(img_path)))
-            os.makedirs(class_folder, exist_ok=True)
-            copy2(img_path, class_folder)
-
-    def load_test_data(self):
-        path = 'eval-data/'
-        if not os.path.exists(path):
-            print(f"Path '{path}' does not exist. No test data loaded.")
-            return []
-        data = ImageFolder(root=path)
-        return data.imgs
+        for img_path, target in zip(img_paths, targets):
+            class_dir = os.path.join(path, str(target))
+            os.makedirs(class_dir, exist_ok=True)
+            img_name = os.path.basename(img_path)
+            dest_path = os.path.join(class_dir, img_name)
+            copyfile(img_path, dest_path)
 
     def load_data(self, known_classes):
         path = 'data/'
@@ -96,11 +90,10 @@ class iData(object):
         self._train_targets = remap_targets(self._train_targets, curr_idxs, new_idxs)
         self._test_targets = remap_targets(self._test_targets, curr_idxs, new_idxs)
 
+        self.save_test_data(self._test_data, self._test_targets)
+
         # Map class names to the new indices
         all_classes = known_classes + new_classes
         self._class_mapping = {idx: name for idx, name in enumerate(all_classes)}
 
         logging.info(f"Class name mapping: {self._class_mapping}")
-
-        remapped_test_imgs = [(img_path, self._class_mapping[label]) for img_path, label in test_imgs]
-        self.save_test_data(remapped_test_imgs)
