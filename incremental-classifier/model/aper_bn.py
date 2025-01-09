@@ -18,7 +18,7 @@ class Learner(object):
         self._session = metadata["session"]
         self._create_network()
         self.batch_size = args.get('batch_size', 128)
-        self.tune_epochs = args.get('tune_epochs', 10)
+        self.tune_epochs = args.get('tune_epochs', 1)
 
     @property
     def feature_dim(self):

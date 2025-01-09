@@ -14,7 +14,7 @@ class iData(object):
     common_trsf = []
 
     def save_test_data(self, img_paths, targets):
-        path = 'eval-data/'
+        path = './checkpoint/eval-data/'
         os.makedirs(path, exist_ok=True)
         for img_path, target in zip(img_paths, targets):
             class_dir = os.path.join(path, str(target))

@@ -17,8 +17,10 @@ def train(args):
     set_random()
     print_args(args)
     
+    model_path = "./checkpoint/model_checkpoint.pth"
+
     try:
-        checkpoint = torch.load("model_checkpoint.pth")
+        checkpoint = torch.load(model_path)
         metadata = checkpoint["metadata"]
         logging.info('Loaded metadata for session {}'.format(metadata["session"]))
         print(metadata)
@@ -38,7 +40,7 @@ def train(args):
     metadata["session"] += 1
 
     logging.info("Saving the model after session {}".format(metadata["session"]))
-    torch.save({"model_state": model._network.state_dict(), "metadata": metadata}, "model_checkpoint.pth")
+    torch.save({"model_state": model._network.state_dict(), "metadata": metadata}, model_path)
 
     accuracies = model.eval_task(data_manager)
     model.after_task()
