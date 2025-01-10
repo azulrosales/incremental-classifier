@@ -111,8 +111,8 @@ class Learner(object):
             self._network = SimpleCosineIncrementalNet(self.args)
         else:
             self._network = MultiBranchCosineIncrementalNet(self.args)
-            from convs.resnet import resnet18
-            from convs.linears import CosineLinear
+            from ..convs.resnet import resnet18
+            from ..convs.linears import CosineLinear
             self._network.convnets.append(resnet18(args=self.args))
             self._network.convnets.append(resnet18(args=self.args))
             self._network._feature_dim = self._network.convnets[0].out_dim * len(self._network.convnets)

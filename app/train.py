@@ -1,4 +1,6 @@
 import os
+import sys
+import io
 import streamlit as st
 from incremental_classifier.trainer import train
 
@@ -14,8 +16,8 @@ if mode == 'Incremental Train':
     uploaded_checkpoint = st.file_uploader("Upload Checkpoint", accept_multiple_files=False, type=["pth"])
     uploaded_test_data = st.file_uploader("Upload Test Images", accept_multiple_files=True, type=["jpg", "jpeg", "png"])
 elif mode == 'Train from Scratch':
-    st.write("  ")
     st.caption("This will create a brand new model.")
+    st.write("  ")
     tune_epochs = st.slider("Tune Epochs", min_value=1, max_value=20, value=10)
 
 st.divider()
@@ -29,10 +31,25 @@ if os.listdir(BASE_FOLDER):
 
 st.write("  ")
 
+def capture_logs(func, *args, **kwargs):
+    # Capture logs and redirect them to Streamlit
+    log_stream = io.StringIO()
+    sys.stdout = log_stream  # Redirect stdout to capture print statements
+
+    try:
+        func(*args, **kwargs)
+    finally:
+        sys.stdout = sys.__stdout__  # Reset stdout to default
+    return log_stream.getvalue()
+
+log_placeholder = st.empty()
+
 if st.button("Start Training!", type='primary'):
-    train(args={
-        'tune_epochs': tune_epochs
-    })
+    logs = capture_logs(train, args={'tune_epochs': tune_epochs})
+
+    # Display logs after training starts
+    log_placeholder.text(logs)
+
 
     checkpoint_path = '../checkpoint/model_checkpoint.pth'
     with open(checkpoint_path, 'rb') as file:
@@ -42,4 +59,3 @@ if st.button("Start Training!", type='primary'):
             file_name="model_checkpoint.pth",
             type="secondary"
         )
-    
