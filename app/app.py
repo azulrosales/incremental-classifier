@@ -5,8 +5,8 @@ st.set_page_config(
     page_icon="😼"
 )
 
-add_class = st.Page("add_class.py", title="Add Class", icon=":material/add_circle:")
-train = st.Page("train.py", title="Train", icon=":material/exercise:")
+add_class = st.Page("add_class.py", title="Add a New Class", icon=":material/add_circle:")
+train = st.Page("train.py", title="Train the Model", icon=":material/exercise:")
 
 pg = st.navigation([
     add_class, 

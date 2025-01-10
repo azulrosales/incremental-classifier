@@ -70,6 +70,6 @@ if st.button("Clear All Folders"):
     try:
         shutil.rmtree(BASE_FOLDER)
         os.makedirs(BASE_FOLDER)
-        st.info("All folders cleared.")
+        st.success("All folders cleared.")
     except Exception as e:
         st.error(f"Error clearing folders: {e}")

@@ -17,7 +17,7 @@ def train(args):
     set_random()
     print_args(args)
     
-    model_path = "./checkpoint/model_checkpoint.pth"
+    model_path = "../checkpoint/model_checkpoint.pth"
 
     try:
         checkpoint = torch.load(model_path)
