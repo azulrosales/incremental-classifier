@@ -2,8 +2,8 @@ import torch
 import numpy as np
 from tqdm import tqdm
 from torch.utils.data import DataLoader
-from model.inc_net import SimpleCosineIncrementalNet, MultiBranchCosineIncrementalNet
-from utils.toolkit import tensor2numpy, accuracy, generate_confusion_matrix
+from .inc_net import SimpleCosineIncrementalNet, MultiBranchCosineIncrementalNet
+from ..utils.toolkit import tensor2numpy, accuracy, generate_confusion_matrix
 
 # Tune the model (with forward BN) at first session, and then conduct simple shot.
 

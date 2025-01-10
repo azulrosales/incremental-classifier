@@ -5,16 +5,13 @@ from PIL import Image
 
 st.title('Add a New Class')
 
-BASE_FOLDER = 'data'
+BASE_FOLDER = '../data'
 if not os.path.exists(BASE_FOLDER):
     os.makedirs(BASE_FOLDER)
 
 st.markdown("""
 ### 💡 How to use:
-            
-1. Upload your images.
-2. Enter the class name for the uploaded images.
-            
+Upload your images and enter the class name for the uploaded images.
 A folder will be automatically created based on the class name, and your images will be stored there
 """)
 st.divider()

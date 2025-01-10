@@ -5,7 +5,7 @@ import numpy as np
 from torch.utils.data import random_split
 from torchvision.datasets import ImageFolder
 from shutil import copyfile
-from utils.toolkit import split_images_labels, remap_targets, build_transform
+from ..utils.toolkit import split_images_labels, remap_targets, build_transform
 
 
 class iData(object):
@@ -14,7 +14,7 @@ class iData(object):
     common_trsf = []
 
     def save_test_data(self, img_paths, targets):
-        path = './checkpoint/eval-data/'
+        path = '../checkpoint/eval_data/'
         os.makedirs(path, exist_ok=True)
         for img_path, target in zip(img_paths, targets):
             class_dir = os.path.join(path, str(target))
@@ -24,7 +24,7 @@ class iData(object):
             copyfile(img_path, dest_path)
 
     def load_data(self, known_classes):
-        path = 'data/'
+        path = '../data/'
         data = ImageFolder(root=path)
 
         try:

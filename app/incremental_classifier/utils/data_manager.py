@@ -3,8 +3,8 @@ import numpy as np
 from torch.utils.data import Dataset
 from torchvision import transforms
 from torchvision.datasets import ImageFolder
-from utils.data import iData
-from utils.toolkit import pil_loader, split_images_labels
+from .data import iData
+from ..utils.toolkit import pil_loader, split_images_labels
 
 
 class DataManager(object):

@@ -1,8 +1,8 @@
 import sys
 import logging
 import torch
-from model.aper_bn import Learner
-from utils.data_manager import DataManager
+from .model.aper_bn import Learner
+from .utils.data_manager import DataManager
 
 
 def train(args):

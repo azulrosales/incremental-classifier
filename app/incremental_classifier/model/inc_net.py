@@ -1,8 +1,8 @@
 import copy
 import torch
 from torch import nn
-from convs.linears import CosineLinear
-from convs.resnet import resnet18
+from ..convs.linears import CosineLinear
+from ..convs.resnet import resnet18
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
