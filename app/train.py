@@ -31,8 +31,11 @@ st.write("  ")
 
 if st.button("Start Training!", type='primary'):
     
-    train({'tune_epochs': tune_epochs})
+    with st.spinner("Training in progress... Please wait."):
+        train({'tune_epochs': tune_epochs})
 
+    st.success('Training completed!😼')
+    
     checkpoint_path = '../checkpoint/model_checkpoint.pth'
     with open(checkpoint_path, 'rb') as file:
         st.download_button(
@@ -41,3 +44,4 @@ if st.button("Start Training!", type='primary'):
             file_name="model_checkpoint.pth",
             type="secondary"
         )
+
