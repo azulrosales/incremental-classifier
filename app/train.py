@@ -30,6 +30,14 @@ if os.listdir(BASE_FOLDER):
 st.write("  ")
 
 if st.button("Start Training!", type='primary'):
+    checkpoint_path = '../checkpoint/'
+    if mode == 'Train from Scratch' and os.path.exists(checkpoint_path):
+        for root, dirs, files in os.walk(checkpoint_path, topdown=False):
+            for file in files:
+                os.remove(os.path.join(root, file))
+            for dir in dirs:
+                os.rmdir(os.path.join(root, dir))
+        os.rmdir(checkpoint_path)
     
     with st.spinner("Training in progress... Please wait."):
         train({'tune_epochs': tune_epochs})
