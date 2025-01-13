@@ -29,7 +29,12 @@ if os.listdir(BASE_FOLDER):
 
 st.write("  ")
 
-if st.button("Start Training!", type='primary'):
+if 'train_button' in st.session_state and st.session_state.train_button == True:
+    st.session_state.training = True
+else:
+    st.session_state.training = False
+
+if st.button("Start Training!", type='primary', disabled=st.session_state.training, key='train_button'):
     checkpoint_path = '../checkpoint/'
     if mode == 'Train from Scratch' and os.path.exists(checkpoint_path):
         for root, dirs, files in os.walk(checkpoint_path, topdown=False):
