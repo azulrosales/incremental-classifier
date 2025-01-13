@@ -1,11 +1,11 @@
 import os
 import torch
-import logging
 import numpy as np
+import streamlit as st
 from torch.utils.data import random_split
 from torchvision.datasets import ImageFolder
 from shutil import copyfile
-from ..utils.toolkit import split_images_labels, remap_targets, build_transform
+from ..utils.toolkit import split_images_labels, remap_targets, build_transform, st_log
 
 
 class iData(object):
@@ -46,7 +46,7 @@ class iData(object):
         # Print number of training samples per class
         targets, n_samples = np.unique(self._train_targets, return_counts=True)
         samples_per_class = {self._class_names[target]: count for target, count in zip(targets, n_samples)}
-        print('Train samples per class:', samples_per_class)
+        st_log(f'Train samples per class: {samples_per_class}')
 
         new_classes = [cls for cls in self._class_names if cls not in known_classes]
         curr_idxs = list(range(len(self._class_names)))
@@ -57,7 +57,7 @@ class iData(object):
         else:
             new_idxs = [known_classes.index(cls) for cls in self._class_names if cls in known_classes]
             replaced_classes = [cls for cls in self._class_names if cls in known_classes]
-            logging.warning(f"Knowledge for {replaced_classes} will be replaced!!!")
+            st_log(f"Knowledge for {replaced_classes} will be replaced!!!")
 
         # Map indices
         self._train_targets = remap_targets(self._train_targets, curr_idxs, new_idxs)
@@ -69,4 +69,4 @@ class iData(object):
         all_classes = known_classes + new_classes
         self._class_mapping = {idx: name for idx, name in enumerate(all_classes)}
 
-        logging.info(f"Class name mapping: {self._class_mapping}")
+        st_log(f"Class name mapping: {self._class_mapping}")

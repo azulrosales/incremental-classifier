@@ -1,9 +1,10 @@
 import torch
 import numpy as np
+import streamlit as st
 from tqdm import tqdm
 from torch.utils.data import DataLoader
 from .inc_net import SimpleCosineIncrementalNet, MultiBranchCosineIncrementalNet
-from ..utils.toolkit import tensor2numpy, accuracy, generate_confusion_matrix
+from ..utils.toolkit import tensor2numpy, accuracy, generate_confusion_matrix, st_log
 
 # Tune the model (with forward BN) at first session, and then conduct simple shot.
 
@@ -70,10 +71,10 @@ class Learner(object):
         embedding_list = torch.cat(embedding_list, dim=0)
         label_list = torch.cat(label_list, dim=0)
 
-        print('APER BN: Replacing FC layer')
+        st_log('Replacing FC Layers...')
         class_list = np.unique(self.train_dataset.labels)
         for class_index in class_list:
-            print('Replacing...', class_index)
+            st_log(f"- Replacing: {class_index}")
             data_index = (label_list == class_index).nonzero().squeeze(-1)
             embedding = embedding_list[data_index]
             proto = embedding.mean(0)
@@ -157,7 +158,7 @@ class Learner(object):
         ret = {}
         per_class = accuracy(y_pred.T[0], y_true, data_manager)
         ret["per_class"] = per_class
-        ret["top1"] = per_class["total"]
+        ret["top1"] = per_class["Total"]
         ret["top{}".format(self.topk)] = np.around(
             (y_pred.T == np.tile(y_true, (self.topk, 1))).sum() * 100 / len(y_true),
             decimals=2,

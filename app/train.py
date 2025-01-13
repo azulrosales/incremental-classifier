@@ -1,6 +1,4 @@
 import os
-import sys
-import io
 import streamlit as st
 from incremental_classifier.trainer import train
 
@@ -23,7 +21,7 @@ elif mode == 'Train from Scratch':
 st.divider()
 
 if os.listdir(BASE_FOLDER):
-    st.markdown("<h5 style='color: #82829e;'>Classes to be Added:</h3>", unsafe_allow_html=True)
+    st.markdown("<h5 style='color: #82829e;'> Classes to be Added: </h3>", unsafe_allow_html=True)
     classes = os.listdir(BASE_FOLDER)
     container = st.container(border=True)
     for folder in classes:
@@ -31,25 +29,9 @@ if os.listdir(BASE_FOLDER):
 
 st.write("  ")
 
-def capture_logs(func, *args, **kwargs):
-    # Capture logs and redirect them to Streamlit
-    log_stream = io.StringIO()
-    sys.stdout = log_stream  # Redirect stdout to capture print statements
-
-    try:
-        func(*args, **kwargs)
-    finally:
-        sys.stdout = sys.__stdout__  # Reset stdout to default
-    return log_stream.getvalue()
-
-log_placeholder = st.empty()
-
 if st.button("Start Training!", type='primary'):
-    logs = capture_logs(train, args={'tune_epochs': tune_epochs})
-
-    # Display logs after training starts
-    log_placeholder.text(logs)
-
+    
+    train({'tune_epochs': tune_epochs})
 
     checkpoint_path = '../checkpoint/model_checkpoint.pth'
     with open(checkpoint_path, 'rb') as file:

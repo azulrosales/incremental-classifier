@@ -1,8 +1,11 @@
 import sys
 import logging
 import torch
+import pandas as pd
+import streamlit as st
 from .model.aper_bn import Learner
 from .utils.data_manager import DataManager
+from .utils.toolkit import st_log
 
 
 def train(args):
@@ -19,11 +22,13 @@ def train(args):
     
     model_path = "../checkpoint/model_checkpoint.pth"
 
+    st.write("#####")
+
     try:
         checkpoint = torch.load(model_path)
         metadata = checkpoint["metadata"]
-        logging.info('Loaded metadata for session {}'.format(metadata["session"]))
-        print(metadata)
+        st_log(f"Loaded metadata for session {metadata['session']}:")
+        st_log(f"- Classes: {metadata['classes']}")
         model = Learner(args, metadata)
         model._network.load_state_dict(checkpoint["model_state"])
     except FileNotFoundError:
@@ -39,13 +44,16 @@ def train(args):
     model.incremental_train(data_manager, total_classes=len(metadata["classes"]))
     metadata["session"] += 1
 
-    logging.info("Saving the model after session {}".format(metadata["session"]))
+    st_log(f"Saving the model after session {metadata["session"]}...")
     torch.save({"model_state": model._network.state_dict(), "metadata": metadata}, model_path)
 
     accuracies = model.eval_task(data_manager)
     model.after_task()
     
-    logging.info("Accuracy: {}".format(accuracies["per_class"]))
+    st_log("Class-wise Accuracies:")
+    df = pd.DataFrame(list(accuracies["per_class"].items()), columns=["Class Name", "Accuracy"])
+    df.set_index("Class Name", inplace=True)
+    st.dataframe(df, use_container_width=True)
 
 def set_random():
     torch.manual_seed(1)

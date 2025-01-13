@@ -3,6 +3,7 @@ import hashlib
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import streamlit as st
 from PIL import Image
 from torchvision import transforms
 from sklearn.metrics import confusion_matrix
@@ -22,7 +23,7 @@ def accuracy(y_pred, y_true, data_manager):
     all_acc = {}
 
     # Total accuracy
-    all_acc["total"] = np.around(
+    all_acc["Total"] = np.around(
         (y_pred == y_true).sum() * 100 / len(y_true), decimals=2
     )
 
@@ -123,3 +124,13 @@ def build_transform(is_train):
     t.append(transforms.ToTensor())
     
     return t
+
+def st_log(content, color='#a6a6b3', font_family="'Courier New'"):
+    st.markdown(
+        f"""
+        <p style="font-family: {font_family}; color: {color};">
+            {content}
+        </p>
+        """,
+        unsafe_allow_html=True
+    )
