@@ -50,11 +50,11 @@ def generate_confusion_matrix(y_true, y_pred, data_manager):
     plt.xticks(rotation=90)
     plt.yticks(rotation=0)
 
-    if not os.path.exists('confusion_matrices'):
-        os.makedirs('confusion_matrices')
+    path = '../checkpoint/'
+    if not os.path.exists(path):
+        os.makedirs(path)
 
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    plt.savefig(f"confusion_matrices/confusion_matrix_{timestamp}.png")
+    plt.savefig(f"{path}/confusion_matrix.png")
     plt.close()
 
 def split_images_labels(imgs):

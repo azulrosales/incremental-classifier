@@ -1,6 +1,8 @@
 import os
-import streamlit as st
+import io
 import shutil
+import zipfile
+import streamlit as st
 from incremental_classifier.trainer import train
 
 DATA_PATH = '../data'
@@ -13,7 +15,7 @@ if mode == 'Incremental Train':
     st.caption("This will add new classes to a pre-existing model.")
     st.write("  ")
     uploaded_checkpoint = st.file_uploader("Upload Checkpoint", accept_multiple_files=False, type=["pth"])
-    uploaded_test_data = st.file_uploader("Upload Test Images", accept_multiple_files=True, type=["jpg", "jpeg", "png"])
+    uploaded_test_data = st.file_uploader("Upload Test Images", accept_multiple_files=False, type=["zip"])
     tune_epochs = None
 elif mode == 'Train from Scratch':
     st.caption("This will create a brand new model.")
@@ -58,6 +60,9 @@ if st.button("Start Training!", type='primary', disabled=st.session_state.traini
             model_checkpoint = os.path.join(CHECKPOINT_PATH, uploaded_checkpoint.name)
             with open(model_checkpoint, 'wb') as f:
                 f.write(uploaded_checkpoint.read())
+        if uploaded_test_data:
+            with zipfile.ZipFile(io.BytesIO(uploaded_test_data.read()), 'r') as zip_ref:
+                zip_ref.extractall(CHECKPOINT_PATH)
     
     with st.spinner("Training in progress... Please wait."):
         success = train({
@@ -73,12 +78,15 @@ if st.button("Start Training!", type='primary', disabled=st.session_state.traini
 
     shutil.make_archive(zip_filename.replace('.zip', ''), 'zip', CHECKPOINT_PATH)
 
-with open(zip_filename, 'rb') as f:
-    if st.download_button(
-        label="Download Checkpoint",
-        data=f,
-        file_name=zip_filename,
-        mime="application/zip",
-        disabled=st.session_state.download_disabled
-    ):
-        st.success('🥳 Download completed!')
+try:
+    with open(zip_filename, 'rb') as f:
+        if st.download_button(
+            label="Download Checkpoint",
+            data=f,
+            file_name=zip_filename,
+            mime="application/zip",
+            disabled=st.session_state.download_disabled
+        ):
+            st.success('🥳 Download completed!')
+except:
+    pass

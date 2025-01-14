@@ -68,3 +68,4 @@ if st.button("Clear All Folders"):
         st.success("All folders cleared.")
     except Exception as e:
         st.error(f"Error clearing folders: {e}")
+        
