@@ -57,6 +57,7 @@ def train(args):
     st_log("Class-wise Accuracies:")
     df = pd.DataFrame(list(accuracies["per_class"].items()), columns=["Class Name", "Accuracy"])
     df.set_index("Class Name", inplace=True)
+    df.to_csv('../checkpoint/test_accuracy.csv')
     st.dataframe(df, use_container_width=True)
 
     return True
