@@ -32,9 +32,13 @@ def train(args):
         model = Learner(args, metadata)
         model._network.load_state_dict(checkpoint["model_state"])
     except FileNotFoundError:
-        logging.warning("No checkpoint found!")
-        metadata = {"classes": [], "session": 0}
-        model = Learner(args, metadata)
+        if args.get('mode') == 'Incremental Train':
+            st.warning('😿 No checkpoint found!')
+            return False
+        else:
+            logging.warning("No checkpoint found!")
+            metadata = {"classes": [], "session": 0}
+            model = Learner(args, metadata)
         
     data_manager = DataManager(known_classes=metadata["classes"])
 
@@ -54,6 +58,8 @@ def train(args):
     df = pd.DataFrame(list(accuracies["per_class"].items()), columns=["Class Name", "Accuracy"])
     df.set_index("Class Name", inplace=True)
     st.dataframe(df, use_container_width=True)
+
+    return True
 
 def set_random():
     torch.manual_seed(1)

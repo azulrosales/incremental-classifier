@@ -5,3 +5,4 @@ data/
 confusion_matrices/
 checkpoint/
 *.pth
+*.zip
