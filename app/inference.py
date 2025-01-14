@@ -25,3 +25,7 @@ if image:
     
     st.success(f"It's a {predicted_classes[0]}! (or a {predicted_classes[1]})")
 
+    st.divider()
+    if st.checkbox("Show model knowledge"):
+        for clss in metadata["classes"]:
+            st.markdown(f"<p style='color: #82829e;'> - {clss} </p>", unsafe_allow_html=True)
