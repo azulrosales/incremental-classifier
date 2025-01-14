@@ -1,6 +1,5 @@
 import torch
 import numpy as np
-import streamlit as st
 from tqdm import tqdm
 from torch.utils.data import DataLoader
 from .inc_net import SimpleCosineIncrementalNet, MultiBranchCosineIncrementalNet
@@ -11,7 +10,7 @@ from ..utils.toolkit import tensor2numpy, accuracy, generate_confusion_matrix, s
 num_workers = 0
 
 class Learner(object):
-    def __init__(self, args, metadata=None):
+    def __init__(self, args={}, metadata=None):
         self._device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.args = args
         self.topk = 2
@@ -203,3 +202,22 @@ class Learner(object):
             y_true.append(targets.cpu().numpy())
 
         return np.concatenate(y_pred), np.concatenate(y_true)  # [N, topk]
+    
+    def _infer(self, img_path):
+        from PIL import Image
+        from torchvision import transforms
+        from ..utils.toolkit import build_transform
+
+        img = Image.open(img_path).convert("RGB")
+        transform = transforms.Compose(build_transform(is_train=False))
+        img = transform(img)
+
+        self._network.eval() 
+        img = img.unsqueeze(0).to(self._device)  
+        with torch.no_grad():
+            outputs = self._network(img)["logits"]
+        predicts = torch.topk(
+            outputs, k=self.topk, dim=1, largest=True, sorted=True
+        )[1]  
+        
+        return predicts.cpu().numpy().flatten()

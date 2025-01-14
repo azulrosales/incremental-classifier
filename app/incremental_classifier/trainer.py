@@ -20,12 +20,12 @@ def train(args):
     set_random()
     print_args(args)
     
-    model_path = "../checkpoint/model_checkpoint.pth"
+    MODEL_PATH = "../checkpoint/model_checkpoint.pth"
 
     st.write("#####")
 
     try:
-        checkpoint = torch.load(model_path)
+        checkpoint = torch.load(MODEL_PATH)
         metadata = checkpoint["metadata"]
         st_log(f"Loaded metadata for session {metadata['session']}:")
         st_log(f"- Classes: {metadata['classes']}")
@@ -42,6 +42,16 @@ def train(args):
         
     data_manager = DataManager(known_classes=metadata["classes"])
 
+    # from PIL import Image
+    # from .utils.toolkit import build_transform
+    # from torchvision import transforms
+    image_path = '../strawberry.jpg'
+    # image = Image.open(image_path).convert("RGB")
+    # transform = transforms.Compose(build_transform(is_train=False))
+    # image = transform(image)
+    inference = model._infer(image_path)
+    print('!!!! 🥳INFERENCE', inference)
+
     new_classes_names = data_manager._class_names
     metadata["classes"].extend(cls for cls in new_classes_names if cls not in metadata["classes"])
     
@@ -49,7 +59,7 @@ def train(args):
     metadata["session"] += 1
 
     st_log(f"Saving the model after session {metadata["session"]}...")
-    torch.save({"model_state": model._network.state_dict(), "metadata": metadata}, model_path)
+    torch.save({"model_state": model._network.state_dict(), "metadata": metadata}, MODEL_PATH)
 
     accuracies = model.eval_task(data_manager)
     model.after_task()

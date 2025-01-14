@@ -15,10 +15,11 @@ class DataManager(object):
         if source == "train":
             data, targets = self._train_data, self._train_targets
         elif source == "test":
-            if not os.path.exists('eval-data/') or not load_test_data:
+            TEST_DATA_PATH = '../checkpoint/eval_data/'
+            if not os.path.exists(TEST_DATA_PATH) or not load_test_data:
                 data, targets = self._test_data, self._test_targets
             else:
-                test_imgs = ImageFolder(root='eval-data/')
+                test_imgs = ImageFolder(root=TEST_DATA_PATH)
                 data, targets = split_images_labels(test_imgs.imgs)
             print(np.unique(targets, return_counts=True))
         else:
