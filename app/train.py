@@ -3,7 +3,7 @@ import streamlit as st
 import shutil
 from incremental_classifier.trainer import train
 
-BASE_FOLDER = '../data'
+DATA_PATH = '../data'
 
 st.title('Train the Model')
 
@@ -22,9 +22,9 @@ elif mode == 'Train from Scratch':
 
 st.divider()
 
-if os.listdir(BASE_FOLDER):
+if os.listdir(DATA_PATH):
     st.markdown("<h5 style='color: #82829e;'> Classes to be Added: </h3>", unsafe_allow_html=True)
-    classes = os.listdir(BASE_FOLDER)
+    classes = os.listdir(DATA_PATH)
     container = st.container(border=True)
     for folder in classes:
         container.write(f"- {folder}")
@@ -39,17 +39,25 @@ else:
     st.session_state.download_disabled = True
 
 
-checkpoint_path = '../checkpoint/'
+CHECKPOINT_PATH = '../checkpoint/'
 zip_filename = 'checkpoint.zip'
 
 if st.button("Start Training!", type='primary', disabled=st.session_state.training, key='train_button'):
-    if mode == 'Train from Scratch' and os.path.exists(checkpoint_path):
-        for root, dirs, files in os.walk(checkpoint_path, topdown=False):
+    if mode == 'Train from Scratch' and os.path.exists(CHECKPOINT_PATH):
+        for root, dirs, files in os.walk(CHECKPOINT_PATH, topdown=False):
             for file in files:
                 os.remove(os.path.join(root, file))
             for dir in dirs:
                 os.rmdir(os.path.join(root, dir))
-        os.rmdir(checkpoint_path)
+        os.rmdir(CHECKPOINT_PATH)
+    
+    if mode == 'Incremental Train':
+        if not os.path.exists(CHECKPOINT_PATH):
+            os.makedirs(CHECKPOINT_PATH)
+        if uploaded_checkpoint:
+            model_checkpoint = os.path.join(CHECKPOINT_PATH, uploaded_checkpoint.name)
+            with open(model_checkpoint, 'wb') as f:
+                f.write(uploaded_checkpoint.read())
     
     with st.spinner("Training in progress... Please wait."):
         success = train({
@@ -63,7 +71,7 @@ if st.button("Start Training!", type='primary', disabled=st.session_state.traini
         st.error('☠️ Training failed')
         st.session_state.download_disabled = True
 
-    shutil.make_archive(zip_filename.replace('.zip', ''), 'zip', checkpoint_path)
+    shutil.make_archive(zip_filename.replace('.zip', ''), 'zip', CHECKPOINT_PATH)
 
 with open(zip_filename, 'rb') as f:
     if st.download_button(
