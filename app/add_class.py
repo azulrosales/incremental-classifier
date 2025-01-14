@@ -9,12 +9,7 @@ BASE_FOLDER = '../data'
 if not os.path.exists(BASE_FOLDER):
     os.makedirs(BASE_FOLDER)
 
-st.markdown("""
-### 💡 How to use:
-Upload your images and enter the class name for the uploaded images.
-A folder will be automatically created based on the class name, and your images will be stored there
-""")
-st.divider()
+st.caption("Upload your images and enter the class name. These images will be used for training.")
 
 # File uploader to upload multiple images
 uploaded_files = st.file_uploader("Upload Images", accept_multiple_files=True, type=["jpg", "jpeg", "png"])
