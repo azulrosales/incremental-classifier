@@ -42,16 +42,6 @@ def train(args):
         
     data_manager = DataManager(known_classes=metadata["classes"])
 
-    # from PIL import Image
-    # from .utils.toolkit import build_transform
-    # from torchvision import transforms
-    image_path = '../strawberry.jpg'
-    # image = Image.open(image_path).convert("RGB")
-    # transform = transforms.Compose(build_transform(is_train=False))
-    # image = transform(image)
-    inference = model._infer(image_path)
-    print('!!!! 🥳INFERENCE', inference)
-
     new_classes_names = data_manager._class_names
     metadata["classes"].extend(cls for cls in new_classes_names if cls not in metadata["classes"])
     
