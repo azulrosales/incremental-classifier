@@ -58,7 +58,7 @@ if os.listdir(BASE_FOLDER):
                 for file in os.listdir(folder_path):
                     st.write(f"- {file}")
 else:
-    st.info("No folders created yet.")
+    st.info("👀 No folders created yet.")
 
 # Option to delete all folders
 if st.button("Clear All Folders"):
