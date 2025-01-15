@@ -45,15 +45,24 @@ CHECKPOINT_PATH = '../checkpoint/'
 zip_filename = 'checkpoint.zip'
 
 if st.button("Start Training!", type='primary', disabled=st.session_state.training, key='train_button'):
-    if mode == 'Train from Scratch' and os.path.exists(CHECKPOINT_PATH):
-        for root, dirs, files in os.walk(CHECKPOINT_PATH, topdown=False):
-            for file in files:
-                os.remove(os.path.join(root, file))
-            for dir in dirs:
-                os.rmdir(os.path.join(root, dir))
-        os.rmdir(CHECKPOINT_PATH)
+    folder_count = len([entry for entry in os.listdir(DATA_PATH) if os.path.isdir(os.path.join(DATA_PATH, entry))])
+
+    if mode == 'Train from Scratch': 
+        if folder_count < 2:
+            st.warning("🧐 Add at least 2 classes to start!")
+            st.stop()
+        if os.path.exists(CHECKPOINT_PATH):
+            for root, dirs, files in os.walk(CHECKPOINT_PATH, topdown=False):
+                for file in files:
+                    os.remove(os.path.join(root, file))
+                for dir in dirs:
+                    os.rmdir(os.path.join(root, dir))
+            os.rmdir(CHECKPOINT_PATH)
     
-    if mode == 'Incremental Train':
+    elif mode == 'Incremental Train':
+        if folder_count < 1:
+            st.warning("🧐 Add at least 1 class to start!")
+            st.stop()
         if not os.path.exists(CHECKPOINT_PATH):
             os.makedirs(CHECKPOINT_PATH)
         if uploaded_checkpoint:

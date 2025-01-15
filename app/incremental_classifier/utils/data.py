@@ -28,7 +28,7 @@ class iData(object):
         try:
             data = ImageFolder(root=path)
         except FileNotFoundError: 
-            st.error("💩 Couldn't find any class folder! Add at least 2 classes to start")
+            st.error("💩 Couldn't find any class folder!")
             st.stop()
 
         try:
