@@ -1,10 +1,20 @@
+import os
 import torch
 import streamlit as st
-import pandas as pd
 from incremental_classifier.model.aper_bn import Learner
 
 
 st.title('Inference')
+
+MODEL_PATH = "../checkpoint/model_checkpoint.pth"
+
+if st.checkbox('Upload Model'):
+    uploaded_checkpoint = st.file_uploader("Upload Checkpoint", accept_multiple_files=False, type=["pth"])
+    if uploaded_checkpoint:
+        if st.button('Save'):
+            with open(MODEL_PATH, 'wb') as f:
+                f.write(uploaded_checkpoint.read())
+                st.success('Model uploaded!')
 
 image = st.file_uploader("Upload an image for inference", type=["jpg", "png", "jpeg"])
 
@@ -12,7 +22,6 @@ if image:
     st.image(image)
     
     # Load model checkpoint
-    MODEL_PATH = "../checkpoint/model_checkpoint.pth"
     try:
         checkpoint = torch.load(MODEL_PATH)
     except FileNotFoundError:
@@ -30,6 +39,6 @@ if image:
     st.success(f"It's a {predicted_classes[0]}! (or a {predicted_classes[1]})")
 
     st.divider()
-    if st.checkbox("Show model knowledge"):
+    if st.toggle("Show model knowledge"):
         for clss in metadata["classes"]:
             st.markdown(f"<p style='color: #82829e;'> - {clss} </p>", unsafe_allow_html=True)
