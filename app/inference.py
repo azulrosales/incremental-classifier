@@ -24,7 +24,7 @@ if image:
     try:
         checkpoint = torch.load(MODEL_PATH)
     except FileNotFoundError:
-        st.warning('😿 No model found! Please create or upload one')-
+        st.warning('😿 No model found! Please create or upload one')
         st.stop()
     metadata = checkpoint["metadata"]
     model = Learner(metadata=metadata)

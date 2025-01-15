@@ -2,6 +2,7 @@ import os
 import io
 import shutil
 import zipfile
+import torch
 import streamlit as st
 from incremental_classifier.trainer import train
 
@@ -14,9 +15,16 @@ mode = st.pills("Select Training Mode", ("Train from Scratch", "Incremental Trai
 if mode == 'Incremental Train':
     st.caption("This will add new classes to a pre-existing model.")
     st.write("  ")
+
     uploaded_checkpoint = st.file_uploader("Upload Checkpoint", accept_multiple_files=False, type=["pth"])
+    if uploaded_checkpoint:
+        checkpoint = torch.load(uploaded_checkpoint, map_location=torch.device('cpu'))
+        metadata = checkpoint["metadata"]
+        st.markdown(f"<p style='color: #82829e; font-style: italic'> ⇾ Model knowledge: {metadata["classes"]} </p>", unsafe_allow_html=True)
+
     uploaded_test_data = st.file_uploader("Upload Test Images", accept_multiple_files=False, type=["zip"])
     tune_epochs = None
+
 elif mode == 'Train from Scratch':
     st.caption("This will create a brand new model.")
     st.write("  ")
