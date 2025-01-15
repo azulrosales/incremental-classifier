@@ -25,7 +25,11 @@ class iData(object):
 
     def load_data(self, known_classes):
         path = '../data/'
-        data = ImageFolder(root=path)
+        try:
+            data = ImageFolder(root=path)
+        except FileNotFoundError: 
+            st.error("💩 Couldn't find any class folder! Add at least 2 classes to start")
+            st.stop()
 
         try:
             train_dataset, test_dataset = random_split(data, [0.7, 0.3], generator=torch.Generator().manual_seed(42))

@@ -13,7 +13,11 @@ if image:
     
     # Load model checkpoint
     MODEL_PATH = "../checkpoint/model_checkpoint.pth"
-    checkpoint = torch.load(MODEL_PATH)
+    try:
+        checkpoint = torch.load(MODEL_PATH)
+    except FileNotFoundError:
+        st.warning('😿 No model found! Please create or upload one')
+        st.stop()
     metadata = checkpoint["metadata"]
     model = Learner(metadata=metadata)
     model._network.load_state_dict(checkpoint["model_state"])
