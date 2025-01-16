@@ -70,6 +70,12 @@ if st.button("Start Training!", type='primary', disabled=st.session_state.traini
             with open(model_checkpoint, 'wb') as f:
                 f.write(uploaded_checkpoint.read())
         if uploaded_test_data:
+            if os.path.exists(CHECKPOINT_PATH + 'eval_data/'):
+                for root, dirs, files  in os.walk(CHECKPOINT_PATH  + 'eval_data/', topdown=False):
+                    for file in files:
+                        os.remove(os.path.join(root, file))
+                    for dir in dirs:
+                        os.rmdir(os.path.join(root, dir))
             with zipfile.ZipFile(io.BytesIO(uploaded_test_data.read()), 'r') as zip_ref:
                 zip_ref.extractall(CHECKPOINT_PATH)
     
