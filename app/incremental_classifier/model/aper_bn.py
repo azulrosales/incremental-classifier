@@ -10,6 +10,10 @@ from ..utils.toolkit import tensor2numpy, accuracy, generate_confusion_matrix, s
 num_workers = 0
 
 class Learner(object):
+    '''
+    Implements the APER BN incremental learning strategy with a focus on batch normalization (BN) adaptation.
+    Supports training, evaluation, and inference using a dual-branch network.
+    '''
     def __init__(self, args={}, metadata=None):
         self._device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.args = args
@@ -22,9 +26,15 @@ class Learner(object):
 
     @property
     def feature_dim(self):
+        """
+        Returns the feature dimensionality of the network.
+        """
         return self._network.feature_dim
 
     def _train(self):
+        """
+        Perform training. Handles the initial training and further incremental sessions.
+        """
         self._network.to(self._device)
 
         if self._session == 0:
@@ -36,10 +46,13 @@ class Learner(object):
         self.replace_fc(self.train_loader_for_protonet, self._network)
 
     def _init_train(self, train_loader):
+        """
+        Conduct the initial training phase.
+
+        Args:
+            train_loader (DataLoader): Data loader for the training dataset.
+        """
         print('APER BN: Initial Training')
-        
-        # Print the bn statistics of the current model
-        # self.record_running_mean()
 
         # Reset the running statistics of the BN layers
         self.clear_running_mean()
@@ -55,6 +68,16 @@ class Learner(object):
                     del logits
 
     def replace_fc(self, train_loader, model):
+        """
+        Replace the FC layers with prototypes for each class.
+
+        Args:
+            train_loader (DataLoader): Data loader for feature extraction.
+            model (torch.nn.Module): Current model.
+
+        Returns:
+            Updated model with replaced FC layers.
+        """
         model = model.eval()
 
         embedding_list = []
@@ -81,32 +104,49 @@ class Learner(object):
         return model
 
     def incremental_train(self, data_manager, total_classes):
+        """
+        Perform incremental training for a new session.
+
+        Args:
+            data_manager: Manages datasets for training and testing.
+            total_classes (int): Total number of classes encountered so far.
+        """
         print('APER BN: Incremental Train')
         self.data_manager = data_manager
         
+        # Load training data
         train_dataset = data_manager.get_dataset(source="train", mode="train")
         self.train_dataset = train_dataset
         self.train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=num_workers)
         self._curr_classes = len(np.unique(train_dataset.labels))
         self._total_classes = total_classes
-        
+
+        # Update network FC layers for new classes
         self._network.update_fc(self._total_classes)
         
+        # Load test data
         test_dataset = data_manager.get_dataset(source="test", mode="test")
         self.test_loader = DataLoader(test_dataset, batch_size=self.batch_size, shuffle=False, num_workers=num_workers)
 
+        # Prepare protonet training data
         train_dataset_for_protonet = data_manager.get_dataset(source="train", mode="test")
         self.train_loader_for_protonet = DataLoader(train_dataset_for_protonet, batch_size=self.batch_size, shuffle=True, num_workers=num_workers)
 
         self._train()
 
     def construct_dual_branch_network(self):
+        '''
+        Build a dual-branch incremental network.
+        '''
         print('APER BN: Constructing MultiBranchCosineIncrementalNet')
         network = MultiBranchCosineIncrementalNet(self.args)
         network.construct_dual_branch_network(self._network, self._curr_classes)
         self._network = network.to(self._device)
 
     def _create_network(self):
+        """
+        Create the appropriate network for the session (initial or incremental).
+        """
         if self._session == 0:
             self._network = SimpleCosineIncrementalNet(self.args)
         else:
@@ -120,6 +160,9 @@ class Learner(object):
             self._network.to(self._device)
 
     def clear_running_mean(self):
+        """
+        Reset the running mean and variance of batch normalization layers.
+        """
         print('APER BN: Cleaning Running Mean')
         # Record the index of running mean and variance
         model_dict = self._network.state_dict()
@@ -147,10 +190,10 @@ class Learner(object):
                 component.running_var = component.running_var * 0
                 component.num_batches_tracked = component.num_batches_tracked * 0
 
-        # print(running_dict[key_name]['mean'],running_dict[key_name]['var'],running_dict[key_name]['nbt'])
-        # print(component.running_mean, component.running_var, component.num_batches_tracked)
-
     def after_task(self):
+        """
+        Update known classes after completing training.
+        """
         self._known_classes = self._total_classes
 
     def _evaluate(self, y_pred, y_true, data_manager):
@@ -168,12 +211,31 @@ class Learner(object):
         return ret
 
     def eval_task(self, data_manager):
+        """
+        Evaluate the model on the current session.
+
+        Args:
+            data_manager: Data manager for obtaining test data.
+
+        Returns:
+            dict: Evaluation metrics including accuracy.
+        """
         y_pred, y_true = self._eval_cnn(self.test_loader)
         accuracy = self._evaluate(y_pred, y_true, data_manager)
 
         return accuracy
 
     def _compute_accuracy(self, model, loader):
+        """
+        Compute accuracy for the given model and data loader.
+
+        Args:
+            model (torch.nn.Module): Model to evaluate.
+            loader (DataLoader): Data loader for evaluation.
+
+        Returns:
+            float: Accuracy in percentage.
+        """
         model.eval()
         correct, total = 0, 0
         for i, (_, inputs, targets) in enumerate(loader):
@@ -187,37 +249,59 @@ class Learner(object):
         return np.around(tensor2numpy(correct) * 100 / total, decimals=2)
 
     def _eval_cnn(self, loader):
+        """
+        Evaluates the current network on a given data loader and returns predictions and true labels.
+
+        Args:
+            loader (torch.utils.data.DataLoader): The data loader providing input data and corresponding labels.
+
+        Returns:
+            tuple:
+                - y_pred (numpy.ndarray): Predicted top-k class indices for all inputs, of shape [N, topk].
+                - y_true (numpy.ndarray): True class labels for all inputs, of shape [N].
+        """
         self._network.eval()
         y_pred, y_true = [], []
         for _, (_, inputs, targets) in enumerate(loader):
             inputs = inputs.to(self._device)
             with torch.no_grad():
-                outputs = self._network(inputs)["logits"]
+                outputs = self._network(inputs)["logits"] # Forward pass
             predicts = torch.topk(
                 outputs, k=self.topk, dim=1, largest=True, sorted=True
             )[
                 1
-            ]  # [bs, topk]
+            ]  # Top-k predictions
             y_pred.append(predicts.cpu().numpy())
             y_true.append(targets.cpu().numpy())
 
         return np.concatenate(y_pred), np.concatenate(y_true)  # [N, topk]
     
     def _infer(self, img_path):
+        """
+        Performs inference on a single image and returns the predicted top-k class indices.
+
+        Args:
+            img_path (str): Path to the image file to be classified.
+
+        Returns:
+            numpy.ndarray: Predicted top-k class indices, of shape [topk].
+        """
         from PIL import Image
         from torchvision import transforms
         from ..utils.toolkit import build_transform
-
+        
+        # Load and preprocess the image
         img = Image.open(img_path).convert("RGB")
         transform = transforms.Compose(build_transform(is_train=False))
         img = transform(img)
 
+        # Perform inference
         self._network.eval() 
         img = img.unsqueeze(0).to(self._device)  
         with torch.no_grad():
-            outputs = self._network(img)["logits"]
+            outputs = self._network(img)["logits"] # Forward pass
         predicts = torch.topk(
             outputs, k=self.topk, dim=1, largest=True, sorted=True
-        )[1]  
+        )[1] # Top-k predictions
         
         return predicts.cpu().numpy().flatten()

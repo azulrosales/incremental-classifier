@@ -26,6 +26,7 @@ elif mode == 'Train from Scratch':
 
 st.divider()
 
+# Display the classes available in the data directory
 if os.listdir(DATA_PATH):
     st.markdown("<h5 style='color: #82829e;'> Classes to be Added: </h3>", unsafe_allow_html=True)
     classes = os.listdir(DATA_PATH)
@@ -35,6 +36,7 @@ if os.listdir(DATA_PATH):
 
 st.write("  ")
 
+# Session state to manage training button state
 if 'train_button' in st.session_state and st.session_state.train_button == True:
     st.session_state.training = True
     st.session_state.download_disabled = False
@@ -47,10 +49,12 @@ zip_filename = 'checkpoint.zip'
 if st.button("Start Training!", type='primary', disabled=st.session_state.training, key='train_button'):
     folder_count = len([entry for entry in os.listdir(DATA_PATH) if os.path.isdir(os.path.join(DATA_PATH, entry))])
 
+    # Validation and preparation for "Train from Scratch"
     if mode == 'Train from Scratch': 
         if folder_count < 2:
             st.warning("🧐 Add at least 2 classes to start!")
             st.stop()
+        # Clear existing checkpoints if they exist
         if os.path.exists(CHECKPOINT_PATH):
             for root, dirs, files in os.walk(CHECKPOINT_PATH, topdown=False):
                 for file in files:
@@ -59,6 +63,7 @@ if st.button("Start Training!", type='primary', disabled=st.session_state.traini
                     os.rmdir(os.path.join(root, dir))
             os.rmdir(CHECKPOINT_PATH)
     
+    # Validation and preparation for "Incremental Train"
     elif mode == 'Incremental Train':
         if folder_count < 1:
             st.warning("🧐 Add at least 1 class to start!")
@@ -79,6 +84,7 @@ if st.button("Start Training!", type='primary', disabled=st.session_state.traini
             with zipfile.ZipFile(io.BytesIO(uploaded_test_data.read()), 'r') as zip_ref:
                 zip_ref.extractall(CHECKPOINT_PATH)
     
+    # Training process
     with st.spinner("Training in progress... Please wait."):
         success = train({
             'mode': mode,
@@ -93,6 +99,7 @@ if st.button("Start Training!", type='primary', disabled=st.session_state.traini
 
     shutil.make_archive(zip_filename.replace('.zip', ''), 'zip', CHECKPOINT_PATH)
 
+# Download button for the checkpoint zip file
 try:
     with open(zip_filename, 'rb') as f:
         if st.download_button(
